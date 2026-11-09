@@ -29,7 +29,7 @@
 2. Test and tune the Mystical Library layout; later: custom sprites, loot chests.
 3. Replace Elven Greatsword placeholder sprites.
 4. Test and tune Volodar's drops (written): Volodar's Bow (30 dmg, every 3rd shot a splitting arcane arrow), Volodar's Grimoire (34 dmg magic, exploding orb + shards), Spectral Sigil (Expert accessory: spectral archer when firing ranged), treasure bag. Normal mode drops bow or grimoire 50/50. Placeholder names/sprites.
-5. Volodar step 3: trophy, mask, relic, Boss Checklist, bestiary, spawn/defeat chat lines (Andy writes the text).
+5. Test Volodar step 3 (written): trophy (1/10), mask (1/7 normal + bag), Master relic, Boss Checklist entry (`Common/ModIntegrations.cs`, progression 3.5), bestiary (Volodar + library biome on elves). Chat lines + bestiary text are placeholders in the hjson for Andy to write.
 
 ## Workflow
 - Small, focused commits with clear messages.

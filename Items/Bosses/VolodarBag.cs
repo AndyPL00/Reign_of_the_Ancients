@@ -11,6 +11,8 @@ namespace Reign_of_the_Ancients.Items.Bosses
     // Volodar's Expert/Master treasure bag: the bow or the grimoire, the Spectral Sigil, and coins.
     public class VolodarBag : ModItem
     {
+        private const int MaskChance = 7; // 1 in N
+
         public override void SetStaticDefaults()
         {
             ItemID.Sets.BossBag[Type] = true;
@@ -34,6 +36,7 @@ namespace Reign_of_the_Ancients.Items.Bosses
         {
             itemLoot.Add(ItemDropRule.OneFromOptions(1, ModContent.ItemType<VolodarsBow>(), ModContent.ItemType<VolodarsGrimoire>()));
             itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<SpectralSigil>()));
+            itemLoot.Add(ItemDropRule.NotScalingWithLuck(ModContent.ItemType<Vanity.VolodarMask>(), MaskChance));
             itemLoot.Add(ItemDropRule.CoinsBasedOnNPCValue(ModContent.NPCType<Volodar>()));
         }
     }

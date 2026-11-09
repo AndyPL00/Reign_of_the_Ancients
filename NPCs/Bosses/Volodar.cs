@@ -2,10 +2,16 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.Common;
 using Reign_of_the_Ancients.Items.Bosses;
+using Reign_of_the_Ancients.Items.Placeable;
+using Reign_of_the_Ancients.Items.Vanity;
 using Reign_of_the_Ancients.Items.Weapons;
+using Terraria.Chat;
+using Terraria.GameContent.Bestiary;
 using Terraria.GameContent.ItemDropRules;
+using Terraria.Localization;
 using Reign_of_the_Ancients.NPCs.Elves;
 using Reign_of_the_Ancients.Projectiles.Bosses;
 using Reign_of_the_Ancients.WorldGeneration;
@@ -36,6 +42,11 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         private const float Phase2LifeRatio = 0.5f;
         private const int Phase1Music = MusicID.Boss1;
         private const int Phase2Music = MusicID.Boss3;
+
+        // ---- Loot ----
+        private const int TrophyChance = 10; // 1 in N
+        private const int MaskChance = 7;    // 1 in N (normal mode; the bag uses the same)
+        private static readonly Color ChatColor = new Color(175, 130, 255);
 
         // ---- Movement ----
         private const float MoveSpeed = 9f;
@@ -249,6 +260,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
                 }
                 NPC.velocity = Vector2.Zero;
                 SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
+                Say("SpawnLine");
             }
 
             NPC.velocity = Tick < 60 ? new Vector2(0f, -0.8f) : NPC.velocity * 0.9f;
@@ -546,6 +558,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             {
                 SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
                 Shake(5f, 30);
+                Say("Phase2Line");
             }
             if (Main.netMode != NetmodeID.Server && Tick % 5 == 0)
             {
@@ -729,6 +742,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
 
         public override void OnKill()
         {
+            Say("DefeatLine");
             NPC.SetEventFlagCleared(ref DownedBossSystem.downedVolodar, -1);
         }
 
@@ -737,10 +751,42 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             // Expert/Master: the treasure bag (bow or grimoire, Spectral Sigil, coins).
             npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<VolodarBag>()));
 
-            // Normal mode: the bow or the grimoire, 50/50.
+            // Normal mode: the bow or the grimoire, 50/50, and sometimes the mask (the bag handles Expert).
             var notExpert = new LeadingConditionRule(new Conditions.NotExpert());
             notExpert.OnSuccess(ItemDropRule.OneFromOptions(1, ModContent.ItemType<VolodarsBow>(), ModContent.ItemType<VolodarsGrimoire>()));
+            notExpert.OnSuccess(ItemDropRule.Common(ModContent.ItemType<VolodarMask>(), MaskChance));
             npcLoot.Add(notExpert);
+
+            // Every mode: trophy. Master Mode: relic.
+            npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<VolodarTrophy>(), TrophyChance));
+            npcLoot.Add(ItemDropRule.MasterModeCommonDrop(ModContent.ItemType<VolodarRelic>()));
+        }
+
+        public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry)
+        {
+            bestiaryEntry.Info.AddRange(new IBestiaryInfoElement[]
+            {
+                ModContent.GetInstance<MysticalLibraryBiome>().ModBiomeBestiaryInfoElement,
+                new FlavorTextBestiaryInfoElement("Mods.Reign_of_the_Ancients.Bestiary.Volodar"),
+            });
+        }
+
+        // Chat line from the localization file (NPCs.Volodar.<key>). Leave a line empty to skip it.
+        private static void Say(string key)
+        {
+            string fullKey = "Mods.Reign_of_the_Ancients.NPCs.Volodar." + key;
+            if (string.IsNullOrWhiteSpace(Language.GetTextValue(fullKey)))
+            {
+                return;
+            }
+            if (Main.netMode == NetmodeID.SinglePlayer)
+            {
+                Main.NewText(Language.GetTextValue(fullKey), ChatColor);
+            }
+            else if (Main.netMode == NetmodeID.Server)
+            {
+                ChatHelper.BroadcastChatMessage(NetworkText.FromKey(fullKey), ChatColor);
+            }
         }
 
         // ================= Drawing =================

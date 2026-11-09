@@ -96,6 +96,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             NPC.value = 180f;
             NPC.knockBackResist = 0.4f;
             NPC.aiStyle = -1;
+            SpawnModBiomes = new int[] { ModContent.GetInstance<MysticalLibraryBiome>().Type }; // bestiary biome
             NPC.noGravity = true;
             NPC.noTileCollide = false; // flies, but can't pass through blocks
         }
