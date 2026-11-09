@@ -1,0 +1,11 @@
+NPCs: {
+	ElvenApprentice.DisplayName: Elven Apprentice
+	ElfSquire.DisplayName: Elf Squire
+	ElfHighGuard.DisplayName: Elf High-Guard
+	ElvenArchmage.DisplayName: Elven Archmage
+}
+
+Projectiles: {
+	ElvenFireball.DisplayName: Elven Fireball
+	ElvenArcaneBolt.DisplayName: Arcane Bolt
+}

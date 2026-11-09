@@ -1,0 +1,5 @@
+displayName = Reign of the Ancients
+author = Spearhead
+version = 0.1
+homepage = 
+description = A world riddled with fallen civilizations, vengeful gods, and the Great Ones who broke them all.
