@@ -16,6 +16,10 @@ Projectiles: {
 	VolodarOrb.DisplayName: Arcane Orb
 	VolodarBeam.DisplayName: Arcane Beam
 	VolodarSpectralArcher.DisplayName: Spectral Archer
+	ArcaneArrow.DisplayName: Arcane Arrow
+	ArcaneShard.DisplayName: Arcane Shard
+	ArcaneOrb.DisplayName: Arcane Orb
+	SpectralArcherAlly.DisplayName: Spectral Archer
 }
 
 Items: {
@@ -40,6 +44,26 @@ Items: {
 	ElvenEssence: {
 		DisplayName: Elven Essence
 		Tooltip: Dropped by the elves of the Mystical Library
+	}
+
+	VolodarsBow: {
+		DisplayName: Volodar's Bow
+		Tooltip: Every third shot fires an arcane arrow that splits into homing shards
+	}
+
+	VolodarsGrimoire: {
+		DisplayName: Volodar's Grimoire
+		Tooltip: Casts an arcane orb that explodes into homing shards
+	}
+
+	SpectralSigil: {
+		DisplayName: Spectral Sigil
+		Tooltip: Firing a ranged weapon summons a spectral archer that shoots the nearest enemy
+	}
+
+	VolodarBag: {
+		DisplayName: Treasure Bag (Volodar)
+		Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
 	}
 }
 

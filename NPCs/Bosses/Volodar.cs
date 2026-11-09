@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Reign_of_the_Ancients.Common;
+using Reign_of_the_Ancients.Items.Bosses;
+using Reign_of_the_Ancients.Items.Weapons;
+using Terraria.GameContent.ItemDropRules;
 using Reign_of_the_Ancients.NPCs.Elves;
 using Reign_of_the_Ancients.Projectiles.Bosses;
 using Reign_of_the_Ancients.WorldGeneration;
@@ -731,7 +734,13 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)
         {
-            // Step 2: Volodar's Bow, treasure bag and Expert accessory.
+            // Expert/Master: the treasure bag (bow or grimoire, Spectral Sigil, coins).
+            npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<VolodarBag>()));
+
+            // Normal mode: the bow or the grimoire, 50/50.
+            var notExpert = new LeadingConditionRule(new Conditions.NotExpert());
+            notExpert.OnSuccess(ItemDropRule.OneFromOptions(1, ModContent.ItemType<VolodarsBow>(), ModContent.ItemType<VolodarsGrimoire>()));
+            npcLoot.Add(notExpert);
         }
 
         // ================= Drawing =================
