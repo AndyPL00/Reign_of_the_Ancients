@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.NPCs.Elves;
+using Reign_of_the_Ancients.Walls.Library;
 using Terraria;
 using Terraria.ModLoader;
 
@@ -37,6 +38,15 @@ namespace Reign_of_the_Ancients.Common
 
         public override void EditSpawnPool(IDictionary<int, float> pool, NPCSpawnInfo spawnInfo)
         {
+            // Sealed spaces (roof attic, belfries): nothing spawns.
+            int atticWall = ModContent.WallType<LibraryAtticWall>();
+            if (Main.tile[spawnInfo.SpawnTileX, spawnInfo.SpawnTileY - 1].WallType == atticWall ||
+                Main.tile[spawnInfo.SpawnTileX, spawnInfo.SpawnTileY].WallType == atticWall)
+            {
+                pool.Clear();
+                return;
+            }
+
             if (FloorAtSpawn(spawnInfo) == MysticalLibrary.NoFloor)
             {
                 return;

@@ -66,7 +66,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
 
         // ---- Entrance hall ----
         public const int DoorHeight = 6;
-        public const int PlazaMargin = 12;          // flattened ground outside each door
+        public const int PlazaMargin = 16;          // shaped ground outside each porch (landing + steps + blend)
         public const int FoundationDepth = 15;
         public const int HallBaySpacing = 20;       // column rhythm
         public const int HallArchHeight = 4;
@@ -115,12 +115,42 @@ namespace Reign_of_the_Ancients.WorldGeneration
         public const int StarBandDepth = 14;        // how far below the arches the night sky reaches
         public const float StarChance = 0.05f;
 
+        // ---- Cathedral exterior ----
+        public const int WingWidth = 10;            // entrance porch on each side of the hall (interior)
+        public const int WingHeight = 10;
+        public const int WingRoofRun = 2;           // lean-to roof rises 1 tile every 2 tiles toward the hall
+        public const int RoofShell = 2;             // roof thickness; the rest is a beamed attic
+        public const int AtticBeamSpacing = 5;
+        public const int TowerUpperWidth = 7;       // narrower upper stage of each tower
+        public const int TowerUpperHeight = 8;
+        public const int BelfryWidth = 3;
+        public const int BelfryHeight = 4;
+        public const int StringCourseSpacing = 6;   // gold bands on the hall's outer walls
+        public const float WeatherChance = 0.12f;   // exposed outer bricks swapped for rough stone
+
+        // ---- Grounding ----
+        public const int LandingWidth = 4;          // paved landing outside each porch door
+        public const int PlazaSteps = 3;            // steps down from the landing to the ground
+        public const int PlazaStepRun = 2;
+        public const float PlantChance = 0.45f;
+
+        // ---- Domes (raised ceilings over key bays) ----
+        public const int DomeHeight = 6;
+        public const int DomeShell = 2;
+        public const int DomeInset = 3;             // dome starts this far in from the bay's pillars
+
+        // ---- Underground hulls ----
+        public const int HullBulge = 3;             // extra, uneven thickness on top of Wall
+        public const float HullAccentChance = 0.08f;
+
         private static readonly int[] BalconyHeightsEven = { 9, 23 };
         private static readonly int[] BalconyHeightsOdd = { 16, 30 };
         private static readonly int[] WallLedgeHeights = { 12, 26 };
 
         private static ushort hallWall, windowWall, roseWall, forbiddenWall, vaultWall, vaultFence, throneWall, backdropWall;
-        private static ushort hallPillarWall, archivePillarWall, nicheWall, thronePillarWall, starWall;
+        private static ushort hallPillarWall, archivePillarWall, nicheWall, thronePillarWall, starWall, atticWall;
+        private static ushort weatheredStone;
+        private static HashSet<int> smoothTypes;
 
         // ================= Planning =================
 
@@ -142,10 +172,10 @@ namespace Reign_of_the_Ancients.WorldGeneration
             int throneX = side > 0 ? stair2End - ThroneRoomWidth : stair2End + 1;
             l.ThroneRoom = new Rectangle(throneX, throneFloor - ThroneRoomHeight, ThroneRoomWidth, ThroneRoomHeight);
 
-            int left = Math.Min(l.Hall.X - Wall - PlazaMargin, Math.Min(l.Archive.X, l.ThroneRoom.X) - Wall);
-            int right = Math.Max(l.Hall.Right + Wall + PlazaMargin, Math.Max(l.Archive.Right, l.ThroneRoom.Right) + Wall);
+            int left = Math.Min(HallOuterLeft(l) - PlazaMargin, Math.Min(l.Archive.X, l.ThroneRoom.X) - Wall - HullBulge);
+            int right = Math.Max(HallOuterRight(l) + PlazaMargin, Math.Max(l.Archive.Right, l.ThroneRoom.Right) + Wall + HullBulge);
             int top = Math.Min(SpireTop(l), TowerTop(l)) - 10;
-            int bottom = l.ThroneRoom.Bottom + Wall;
+            int bottom = l.ThroneRoom.Bottom + Wall + HullBulge;
             l.Bounds = new Rectangle(left, top, right - left, bottom - top);
             return l;
         }
@@ -154,7 +184,17 @@ namespace Reign_of_the_Ancients.WorldGeneration
         private static int RoofBase(LibraryLayout l) => l.Hall.Y - Wall - 1;
         private static int RoofPeak(LibraryLayout l) => RoofBase(l) - RoofHalfWidth / RoofRun;
         private static int SpireTop(LibraryLayout l) => RoofPeak(l) - SpireHeight - SpireTipHeight;
-        private static int TowerTop(LibraryLayout l) => RoofBase(l) - TowerHeight - TowerCapHeight;
+        private static int TowerTop(LibraryLayout l) => RoofBase(l) - TowerHeight - TowerUpperHeight - TowerCapHeight;
+
+        // Outer edges of the cathedral including both porches (right edge is exclusive).
+        private static int HallOuterLeft(LibraryLayout l) => l.Hall.X - Wall - WingWidth - Wall;
+        private static int HallOuterRight(LibraryLayout l) => l.Hall.Right + Wall + WingWidth + Wall;
+
+        private static Rectangle Wing(LibraryLayout l, bool left)
+        {
+            int x = left ? l.Hall.X - Wall - WingWidth : l.Hall.Right + Wall;
+            return new Rectangle(x, l.GroundY - WingHeight, WingWidth, WingHeight);
+        }
 
         // ================= Building =================
 
@@ -167,13 +207,19 @@ namespace Reign_of_the_Ancients.WorldGeneration
             PrepareSite(l);
 
             Box(l.Hall, hallBrick, hallWall);
-            Box(l.Archive, forbiddenBrick, forbiddenWall);
-            Box(l.ThroneRoom, throneBrick, throneWall);
+            Box(Wing(l, true), hallBrick, hallWall);
+            Box(Wing(l, false), hallBrick, hallWall);
+            Hull(l.Archive, forbiddenBrick, forbiddenTrim, forbiddenWall);
+            Hull(l.ThroneRoom, throneBrick, throneTrim, throneWall);
+            TrimRows(Wing(l, true), hallTrim, carpet);
+            TrimRows(Wing(l, false), hallTrim, carpet);
             TrimRows(l.Hall, hallTrim, carpet);
             TrimRows(l.Archive, forbiddenTrim, forbiddenTrim);
             TrimRows(l.ThroneRoom, throneTrim, throneTrim);
             Roof(l);
+            WingRoofs(l);
             Towers(l);
+            StringCourses(l);
 
             List<int> hallPillars = EvenPillars(l.Hall, HallBaySpacing);
             List<int> archivePillars = EvenPillars(l.Archive, ArchiveBaySpacing);
@@ -181,6 +227,14 @@ namespace Reign_of_the_Ancients.WorldGeneration
             int[] hallArch = ArchedCeiling(l.Hall, hallPillars, HallArchHeight, hallBrick, hallTrim);
             int[] archiveArch = ArchedCeiling(l.Archive, archivePillars, ArchiveArchHeight, forbiddenBrick, forbiddenTrim);
             int[] throneArch = ArchedCeiling(l.ThroneRoom, thronePillars, ThroneArchHeight, throneBrick, throneTrim);
+
+            // Domes over the key bays: the rose window, the sealed vault, and the throne.
+            var hallBays = Bays(l.Hall, hallPillars);
+            var archiveBays = Bays(l.Archive, archivePillars);
+            var throneBay = Bays(l.ThroneRoom, thronePillars).Find(bay => bay.a < ThroneX(l) && ThroneX(l) < bay.c);
+            Dome(l.Hall, hallBays[hallBays.Count / 2], hallArch, hallBrick, hallTrim, hallWall);
+            Dome(l.Archive, archiveBays[archiveBays.Count / 2], archiveArch, forbiddenBrick, forbiddenTrim, forbiddenWall);
+            Dome(l.ThroneRoom, throneBay, throneArch, throneBrick, throneTrim, throneWall);
 
             Staircase(l.Stair1X, l.GroundY, l.Archive.Bottom - l.GroundY, l.Side,
                 carpet, hallBrick, hallWall, ItemID.WhiteTorch,
@@ -192,9 +246,29 @@ namespace Reign_of_the_Ancients.WorldGeneration
             HallStructure(l, hallPillars, hallArch);
             ArchiveStructure(l, archivePillars, archiveArch);
             ThroneStructure(l, thronePillars, throneArch);
+            WingDoors(l);
 
+            // Ceiling tiles that banners will hang from must stay flat, so smoothing skips them.
+            var keepFlat = new HashSet<Point>();
+            int bannerSide = PillarFootHalfWidth + 1;
+            void KeepHangPoint(Rectangle room, int[] depth, int x)
+            {
+                if (x >= room.X && x < room.Right)
+                {
+                    keepFlat.Add(new Point(x, HangY(room, depth, x) - 1));
+                }
+            }
+            foreach (int p in hallPillars) { KeepHangPoint(l.Hall, hallArch, p - bannerSide); KeepHangPoint(l.Hall, hallArch, p + bannerSide); }
+            foreach (int p in thronePillars) { KeepHangPoint(l.ThroneRoom, throneArch, p - bannerSide); KeepHangPoint(l.ThroneRoom, throneArch, p + bannerSide); }
+            KeepHangPoint(l.ThroneRoom, throneArch, ThroneX(l) - (BackdropHalfWidth + 1));
+            KeepHangPoint(l.ThroneRoom, throneArch, ThroneX(l) + (BackdropHalfWidth + 1));
+
+            Weather(l);
+            SmoothEdges(l.Bounds, keepFlat);
             WorldGen.RangeFrame(l.Bounds.Left, l.Bounds.Top, l.Bounds.Right, l.Bounds.Bottom);
 
+            PlazaDecor(l);
+            WingFurniture(l);
             HallFurniture(l, hallPillars, hallArch, torches);
             ArchiveFurniture(l, archivePillars, archiveArch, torches);
             ThroneFurniture(l, thronePillars, throneArch, torches);
@@ -227,29 +301,55 @@ namespace Reign_of_the_Ancients.WorldGeneration
             nicheWall = (ushort)ModContent.WallType<ArchiveNicheWall>();
             thronePillarWall = (ushort)ModContent.WallType<ThronePillarWall>();
             starWall = (ushort)ModContent.WallType<ThroneStarWall>();
+            atticWall = (ushort)ModContent.WallType<LibraryAtticWall>();
+            weatheredStone = (ushort)ModContent.TileType<LibraryWeatheredStone>();
+            smoothTypes = new HashSet<int>
+            {
+                hallBrick, hallTrim, carpet, weatheredStone, forbiddenBrick, forbiddenTrim, throneBrick, throneTrim, TileID.MarbleBlock,
+            };
         }
 
         // ================= Terrain and shells =================
 
-        // Clears the sky above the hall and plaza, then fills holes so both sit on solid, flat ground.
+        // Clears the sky above the cathedral and shapes the ground around it: a paved marble landing
+        // outside each porch, steps down to the surrounding ground, then grass blending outward.
         private static void PrepareSite(LibraryLayout l)
         {
-            int left = l.Hall.X - Wall - PlazaMargin;
-            int right = l.Hall.Right + Wall + PlazaMargin;
+            int outerLeft = HallOuterLeft(l);
+            int outerRight = HallOuterRight(l);
+            int podiumEnd = LandingWidth + PlazaSteps * PlazaStepRun;
+            int bottom = l.GroundY + Wall + FoundationDepth;
 
-            for (int x = left; x < right; x++)
+            for (int x = outerLeft - PlazaMargin; x < outerRight + PlazaMargin; x++)
             {
-                for (int y = l.Bounds.Top; y < l.GroundY; y++)
+                int distance = x < outerLeft ? outerLeft - x : x >= outerRight ? x - outerRight + 1 : 0;
+                int surface = l.GroundY;
+                if (distance > LandingWidth)
+                {
+                    surface += Math.Min(PlazaSteps, (distance - LandingWidth - 1) / PlazaStepRun + 1);
+                }
+
+                for (int y = l.Bounds.Top; y < surface; y++)
                 {
                     Main.tile[x, y].ClearEverything();
                 }
-                for (int y = l.GroundY; y < l.GroundY + Wall + FoundationDepth; y++)
+
+                for (int y = surface; y < bottom; y++)
                 {
                     Tile tile = Main.tile[x, y];
                     tile.LiquidAmount = 0;
-                    if (!tile.HasTile || !Main.tileSolid[tile.TileType])
+                    bool podium = distance > 0 && distance <= podiumEnd && y <= l.GroundY + PlazaSteps;
+                    if (podium)
                     {
-                        SetTile(x, y, y == l.GroundY ? TileID.Grass : TileID.Dirt);
+                        SetTile(x, y, TileID.MarbleBlock);
+                    }
+                    else if (!tile.HasTile || !Main.tileSolid[tile.TileType])
+                    {
+                        SetTile(x, y, y == surface && distance > podiumEnd ? TileID.Grass : TileID.Dirt);
+                    }
+                    else if (y == surface && distance > podiumEnd && tile.TileType == TileID.Dirt)
+                    {
+                        tile.TileType = TileID.Grass;
                     }
                 }
             }
@@ -272,6 +372,42 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
+        // Underground shell: at least Wall thick, with rounded corners and an uneven outer surface
+        // (thickness drifts by up to HullBulge), speckled with trim for texture.
+        private static void Hull(Rectangle interior, ushort brick, ushort accent, ushort wall)
+        {
+            float phaseA = WorldGen.genRand.NextFloat(MathHelper.TwoPi);
+            float phaseB = WorldGen.genRand.NextFloat(MathHelper.TwoPi);
+            int reach = Wall + HullBulge;
+
+            for (int x = interior.X - reach; x < interior.Right + reach; x++)
+            {
+                for (int y = interior.Y - reach; y < interior.Bottom + reach; y++)
+                {
+                    int dx = x < interior.X ? interior.X - x : x >= interior.Right ? x - interior.Right + 1 : 0;
+                    int dy = y < interior.Y ? interior.Y - y : y >= interior.Bottom ? y - interior.Bottom + 1 : 0;
+
+                    if (dx == 0 && dy == 0)
+                    {
+                        Main.tile[x, y].ClearEverything();
+                        SetWall(x, y, wall);
+                        continue;
+                    }
+
+                    float noise = 0.5f + 0.3f * (float)Math.Sin(x * 0.11f + phaseA) + 0.2f * (float)Math.Sin(y * 0.23f + phaseB);
+                    float thickness = Wall + HullBulge * MathHelper.Clamp(noise, 0f, 1f);
+                    float distance = (float)Math.Sqrt(dx * dx + dy * dy);
+                    if (distance <= thickness)
+                    {
+                        Main.tile[x, y].ClearEverything();
+                        SetWall(x, y, wall);
+                        bool outerLayer = distance > Wall;
+                        SetTile(x, y, outerLayer && WorldGen.genRand.NextFloat() < HullAccentChance ? accent : brick);
+                    }
+                }
+            }
+        }
+
         // Trim along the ceiling and floor; the floor surface inside the room uses `floorTop`.
         private static void TrimRows(Rectangle room, ushort trim, ushort floorTop)
         {
@@ -284,6 +420,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
+        // Gable roof: a gold-ridged shell with a hollow, beamed attic inside, topped by the spire.
         private static void Roof(LibraryLayout l)
         {
             int baseY = RoofBase(l);
@@ -291,12 +428,25 @@ namespace Reign_of_the_Ancients.WorldGeneration
             for (int dx = -halfWidth; dx <= halfWidth; dx++)
             {
                 int x = l.CenterX + dx;
-                int rise = (halfWidth - Math.Abs(dx)) / RoofRun;
-                for (int y = baseY - rise; y <= baseY; y++)
+                int top = baseY - (halfWidth - Math.Abs(dx)) / RoofRun;
+                for (int y = top; y <= baseY; y++)
                 {
-                    // Gold ridge along the top edge and a gold band along the eaves.
-                    bool edge = y == baseY - rise || y == baseY;
-                    SetTile(x, y, edge ? hallTrim : hallBrick);
+                    if (y == top || y == baseY)
+                    {
+                        SetTile(x, y, hallTrim); // gold ridge and eaves
+                    }
+                    else if (y < top + RoofShell)
+                    {
+                        SetTile(x, y, hallBrick);
+                    }
+                    else
+                    {
+                        SetWall(x, y, atticWall);
+                        if (dx % AtticBeamSpacing == 0)
+                        {
+                            SetTile(x, y, TileID.WoodenBeam);
+                        }
+                    }
                 }
             }
 
@@ -318,32 +468,265 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        // Bell towers standing over each door, with gold bands and pointed caps.
+        // Lean-to roofs over the porches, rising toward the main hall.
+        private static void WingRoofs(LibraryLayout l)
+        {
+            foreach (bool left in new[] { true, false })
+            {
+                Rectangle wing = Wing(l, left);
+                int baseY = wing.Y - Wall - 1;
+                int outerEdge = left ? wing.X - Wall - 1 : wing.Right + Wall; // one tile of overhang
+                int innerEdge = left ? l.Hall.X - Wall - 1 : l.Hall.Right + Wall;
+                int step = left ? 1 : -1;
+                for (int x = outerEdge, dist = 0; x != innerEdge + step; x += step, dist++)
+                {
+                    int top = baseY - dist / WingRoofRun;
+                    for (int y = top; y <= baseY; y++)
+                    {
+                        SetTile(x, y, y == top || y == baseY ? hallTrim : hallBrick);
+                    }
+                }
+            }
+        }
+
+        // Bell towers over each door: a tall lower stage with an open belfry, a narrower upper stage,
+        // and a pointed gold-tipped cap.
         private static void Towers(LibraryLayout l)
         {
             int baseY = RoofBase(l);
             foreach (int wallCenter in new[] { l.Hall.X - Wall / 2 - 1, l.Hall.Right + Wall / 2 })
             {
-                int left = wallCenter - TowerWidth / 2;
-                for (int x = left; x < left + TowerWidth; x++)
+                TowerStage(wallCenter, baseY, TowerWidth, TowerHeight);
+
+                // Belfry opening near the top of the lower stage.
+                int belfryTop = baseY - TowerHeight + 2;
+                for (int x = wallCenter - BelfryWidth / 2; x <= wallCenter + BelfryWidth / 2; x++)
                 {
-                    for (int y = baseY - TowerHeight; y <= baseY; y++)
+                    for (int y = belfryTop; y < belfryTop + BelfryHeight; y++)
                     {
-                        bool band = (baseY - y) % TowerBandSpacing == 0;
-                        SetTile(x, y, band ? hallTrim : hallBrick);
+                        Tile tile = Main.tile[x, y];
+                        tile.HasTile = false;
+                        SetWall(x, y, atticWall);
                     }
                 }
 
-                // Pointed cap, narrowing by one tile per side each row.
-                int capBase = baseY - TowerHeight - 1;
+                int upperBase = baseY - TowerHeight - 1;
+                TowerStage(wallCenter, upperBase, TowerUpperWidth, TowerUpperHeight);
+
+                int capBase = upperBase - TowerUpperHeight - 1;
+                int left = wallCenter - TowerUpperWidth / 2;
                 for (int row = 0; row < TowerCapHeight; row++)
                 {
-                    int inset = row * (TowerWidth / 2) / TowerCapHeight;
-                    for (int x = left + inset; x < left + TowerWidth - inset; x++)
+                    int inset = row * (TowerUpperWidth / 2 + 1) / TowerCapHeight;
+                    for (int x = left + inset; x < left + TowerUpperWidth - inset; x++)
                     {
                         SetTile(x, capBase - row, row >= TowerCapHeight - 2 ? hallTrim : hallBrick);
                     }
                 }
+            }
+        }
+
+        private static void TowerStage(int center, int baseY, int width, int height)
+        {
+            int left = center - width / 2;
+            for (int x = left; x < left + width; x++)
+            {
+                for (int y = baseY - height; y <= baseY; y++)
+                {
+                    bool band = (baseY - y) % TowerBandSpacing == 0;
+                    SetTile(x, y, band ? hallTrim : hallBrick);
+                }
+            }
+        }
+
+        // Gold bands every few rows on the hall's outer walls, between the porch roofs and the eaves.
+        private static void StringCourses(LibraryLayout l)
+        {
+            int roofBase = RoofBase(l);
+            foreach (int x in new[] { l.Hall.X - Wall, l.Hall.Right + Wall - 1 })
+            {
+                for (int y = roofBase + 1; y < l.GroundY; y++)
+                {
+                    Tile tile = Main.tile[x, y];
+                    if (tile.HasTile && tile.TileType == hallBrick && (l.GroundY - y) % StringCourseSpacing == 0)
+                    {
+                        tile.TileType = hallTrim;
+                    }
+                }
+            }
+        }
+
+        // Porch outer doors with gold lintels.
+        private static void WingDoors(LibraryLayout l)
+        {
+            foreach (bool left in new[] { true, false })
+            {
+                Rectangle wing = Wing(l, left);
+                int doorX = left ? wing.X - Wall : wing.Right;
+                for (int x = doorX; x < doorX + Wall; x++)
+                {
+                    for (int y = l.GroundY - DoorHeight; y < l.GroundY; y++)
+                    {
+                        Tile tile = Main.tile[x, y];
+                        tile.HasTile = false;
+                    }
+                    SetTile(x, l.GroundY - DoorHeight - 1, hallTrim);
+                    SetTile(x, l.GroundY, hallTrim);
+                }
+            }
+        }
+
+        // Swaps some exposed outer bricks of the cathedral for rough stone so it looks weathered.
+        private static void Weather(LibraryLayout l)
+        {
+            for (int x = HallOuterLeft(l) - 2; x < HallOuterRight(l) + 2; x++)
+            {
+                for (int y = l.Bounds.Top; y < l.GroundY; y++)
+                {
+                    Tile tile = Main.tile[x, y];
+                    if (tile.HasTile && tile.TileType == hallBrick && TouchesSky(x, y) && WorldGen.genRand.NextFloat() < WeatherChance)
+                    {
+                        tile.TileType = weatheredStone;
+                    }
+                }
+            }
+        }
+
+        private static bool TouchesSky(int x, int y)
+        {
+            return IsSky(x - 1, y) || IsSky(x + 1, y) || IsSky(x, y - 1) || IsSky(x, y + 1);
+        }
+
+        private static bool IsSky(int x, int y)
+        {
+            Tile tile = Main.tile[x, y];
+            return !tile.HasTile && tile.WallType == 0;
+        }
+
+        // Slopes every exposed corner of the library's bricks: smooth roof lines, rounded arches,
+        // ramps on the staircases and softer hull edges.
+        private static void SmoothEdges(Rectangle bounds, HashSet<Point> keepFlat)
+        {
+            for (int x = bounds.Left + 1; x < bounds.Right - 1; x++)
+            {
+                for (int y = bounds.Top + 1; y < bounds.Bottom - 1; y++)
+                {
+                    Tile tile = Main.tile[x, y];
+                    if (!tile.HasTile || !smoothTypes.Contains(tile.TileType) || tile.Slope != SlopeType.Solid || tile.IsHalfBlock
+                        || keepFlat.Contains(new Point(x, y)))
+                    {
+                        continue;
+                    }
+
+                    bool up = IsSolid(x, y - 1);
+                    bool down = IsSolid(x, y + 1);
+                    bool left = IsSolid(x - 1, y);
+                    bool right = IsSolid(x + 1, y);
+
+                    if (!up && down)
+                    {
+                        if (!left && right)
+                        {
+                            tile.Slope = SlopeType.SlopeDownRight; // bottom and right solid
+                        }
+                        else if (left && !right)
+                        {
+                            tile.Slope = SlopeType.SlopeDownLeft;  // bottom and left solid
+                        }
+                    }
+                    else if (up && !down)
+                    {
+                        if (!left && right)
+                        {
+                            tile.Slope = SlopeType.SlopeUpRight;   // top and right solid
+                        }
+                        else if (left && !right)
+                        {
+                            tile.Slope = SlopeType.SlopeUpLeft;    // top and left solid
+                        }
+                    }
+                }
+            }
+        }
+
+        private static bool IsSolid(int x, int y)
+        {
+            Tile tile = Main.tile[x, y];
+            return tile.HasTile && Main.tileSolid[tile.TileType] && !Main.tileSolidTop[tile.TileType];
+        }
+
+        // Lamp posts on the landings and plants on the grass around the building.
+        private static void PlazaDecor(LibraryLayout l)
+        {
+            Place(HallOuterLeft(l) - LandingWidth, l.GroundY - 1, ItemID.LampPost);
+            Place(HallOuterRight(l) + LandingWidth - 1, l.GroundY - 1, ItemID.LampPost);
+
+            int podiumEnd = LandingWidth + PlazaSteps * PlazaStepRun;
+            for (int x = HallOuterLeft(l) - PlazaMargin; x < HallOuterRight(l) + PlazaMargin; x++)
+            {
+                int distance = x < HallOuterLeft(l) ? HallOuterLeft(l) - x : x >= HallOuterRight(l) ? x - HallOuterRight(l) + 1 : 0;
+                if (distance <= podiumEnd)
+                {
+                    continue;
+                }
+                int y = l.GroundY + PlazaSteps;
+                if (Main.tile[x, y].TileType == TileID.Grass && !Main.tile[x, y - 1].HasTile && WorldGen.genRand.NextFloat() < PlantChance)
+                {
+                    WorldGen.PlaceTile(x, y - 1, TileID.Plants, true, false, -1, WorldGen.genRand.Next(0, 45));
+                }
+            }
+        }
+
+        // Porches: carpet floor (from TrimRows), a banner and two lamps.
+        private static void WingFurniture(LibraryLayout l)
+        {
+            foreach (bool left in new[] { true, false })
+            {
+                Rectangle wing = Wing(l, left);
+                int center = wing.X + wing.Width / 2;
+                Place(center, wing.Y, ItemID.RedBanner);
+                Place(wing.X + 1, l.GroundY - 1, ItemID.MarbleLamp);
+                Place(wing.Right - 2, l.GroundY - 1, ItemID.MarbleLamp);
+            }
+        }
+
+        // Raises the ceiling of one bay into a round dome (with its own brick shell), opening up
+        // above the arch. Updates `depth` so things hung at HangY hang from the dome.
+        private static void Dome(Rectangle room, (int a, int c, int center) bay, int[] depth, ushort brick, ushort trim, ushort wall)
+        {
+            if (bay.c <= bay.a)
+            {
+                return;
+            }
+
+            float half = (bay.c - bay.a) / 2f - DomeInset;
+            float mid = (bay.a + bay.c) / 2f;
+            for (int x = bay.a + 1; x < bay.c; x++)
+            {
+                float d = Math.Abs(x - mid) / half;
+                if (d >= 1f)
+                {
+                    continue;
+                }
+                int height = (int)Math.Round(DomeHeight * Math.Sqrt(1f - d * d));
+                if (height <= 0)
+                {
+                    continue;
+                }
+
+                int oldDepth = Math.Max(0, depth[x - room.X]);
+                for (int y = room.Y - height; y < room.Y + oldDepth; y++)
+                {
+                    Tile tile = Main.tile[x, y];
+                    tile.HasTile = false;
+                    SetWall(x, y, wall);
+                }
+                for (int y = room.Y - height - DomeShell; y < room.Y - height; y++)
+                {
+                    SetTile(x, y, y == room.Y - height - 1 ? trim : brick);
+                    SetWall(x, y, wall);
+                }
+                depth[x - room.X] = -height;
             }
         }
 

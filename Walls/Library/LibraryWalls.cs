@@ -72,6 +72,14 @@ namespace Reign_of_the_Ancients.Walls.Library
         protected override Color MapColor => new Color(190, 150, 60);
     }
 
+    // Wooden backing inside the roof attic and tower belfries. Not part of any floor, and
+    // MysticalLibrarySpawns blocks all spawns in front of it (those spaces are sealed off).
+    public class LibraryAtticWall : LibraryWallBase
+    {
+        protected override int VanillaWallID => WallID.Wood;
+        protected override Color MapColor => new Color(110, 80, 55);
+    }
+
     // ----- Floor 2: forbidden archive -----
 
     // Demonite backing behind the archive's pillars, also used for wall bands.

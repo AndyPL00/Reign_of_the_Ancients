@@ -46,6 +46,14 @@ namespace Reign_of_the_Ancients.Tiles.Library
         protected override int BlockDust => DustID.GoldCoin;
     }
 
+    // Weathered patches on the cathedral's outside: rough natural marble.
+    public class LibraryWeatheredStone : LibraryBlockBase
+    {
+        protected override int VanillaTileID => TileID.Marble;
+        protected override Color MapColor => new Color(200, 195, 185);
+        protected override int BlockDust => DustID.Marble;
+    }
+
     // Forbidden archive: obsidian brick.
     public class ForbiddenBrick : LibraryBlockBase
     {
