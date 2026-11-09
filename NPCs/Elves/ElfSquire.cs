@@ -2,11 +2,14 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Common;
 
 namespace Reign_of_the_Ancients.NPCs.Elves
 {
     public class ElfSquire : ModNPC
     {
+        private const float LibrarySpawnChance = 0.8f; // relative weight vs. other elves on the same floor
         private const float WalkSpeed = 1.5f;
         private const int FrameDelay = 6;
 
@@ -83,7 +86,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
 
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
         {
-            return 0f;
+            return MysticalLibrarySpawns.Chance(spawnInfo, MysticalLibrary.EntranceHall, LibrarySpawnChance);
         }
     }
 }

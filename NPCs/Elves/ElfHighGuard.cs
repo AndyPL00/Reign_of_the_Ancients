@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Common;
 using Terraria.DataStructures;
 using Terraria.GameContent.ItemDropRules;
 using Reign_of_the_Ancients.Items.Weapons;
@@ -10,6 +12,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
 {
     public class ElfHighGuard : ModNPC
     {
+        private const float LibrarySpawnChance = 0.8f; // relative weight vs. other elves on the same floor
         private const float WalkSpeed = 1.2f;
         private const float ThrustRange = 90f;
         private const int WindupTicks = 40;
@@ -230,7 +233,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
 
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
         {
-            return 0f;
+            return MysticalLibrarySpawns.Chance(spawnInfo, MysticalLibrary.ForbiddenArchive, LibrarySpawnChance);
         }
     }
 }

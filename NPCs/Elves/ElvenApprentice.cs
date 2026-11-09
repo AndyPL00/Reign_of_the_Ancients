@@ -2,12 +2,15 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Common;
 using Reign_of_the_Ancients.Projectiles.Elves;
 
 namespace Reign_of_the_Ancients.NPCs.Elves
 {
     public class ElvenApprentice : ModNPC
     {
+        private const float LibrarySpawnChance = 1f; // relative weight vs. other elves on the same floor
         private const int FireCooldownTicks = 90;
         private const float DetectRange = 700f;
         private const float PreferredDistance = 300f;
@@ -130,7 +133,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
 
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
         {
-            return 0f;
+            return MysticalLibrarySpawns.Chance(spawnInfo, MysticalLibrary.EntranceHall, LibrarySpawnChance);
         }
     }
 }

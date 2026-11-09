@@ -13,17 +13,18 @@
 - Tunable numbers go in `const` fields at the top of each class.
 - Known gotchas: `using Terraria.DataStructures;` is needed for `PlayerDeathReason.ByNPC(...)` (capital NPC).
 - Lore is Andy's: don't invent or change lore unless asked.
+- Always ask me questions when something is unclear,as many as it takes for you to get a clear picture of what we are doing/want to achieve.
 
 ## Status (Reign of the Elves, Pre-Hardmode, after the Evil boss)
 - Done: Elven Apprentice, Elf Squire, Elf High-Guard.
 - Written, needs in-game testing: Elven Archmage (spread / telegraphed beam / safe teleport), ElvenArcaneBolt.
-- Written, needs in-game testing: Elven Greatsword (held heavy swing + right-click magic slash, `MeleeMagicDamageClass`). Sprites are placeholders.
-- All `SpawnChance` return 0f until the Mystical Library biome exists.
+- Done: Elven Greatsword (held heavy swing + right-click magic slash, `MeleeMagicDamageClass`). Sprites are placeholders.
+- Written, needs in-game testing: Mystical Library (world gen in `WorldGeneration/`, debug `/buildlibrary`). Floor 1 cathedral (Apprentice, Squire), grand staircase to floor 2 forbidden archive (Archmage, High-Guard), staircase to floor 3 arena (no spawns, for Volodar). Floors are detected by wall type (`MysticalLibrary.FloorAt`). Blocks need 130 pick power (Palladium), walls unbreakable until Hardmode. Vanilla textures as placeholders. No loot yet.
 
 ## Next up
 1. Test and tune the Archmage.
-2. Test and tune the Elven Greatsword; replace placeholder sprites.
-3. Mystical Library: pre-built structure + spawn conditions.
+2. Test and tune the Mystical Library layout; later: custom sprites, loot chests.
+3. Replace Elven Greatsword placeholder sprites.
 4. Volodar boss (mage-archer) and his signature bow. Aim for a flashy, Calamity-style feel.
 
 ## Workflow
