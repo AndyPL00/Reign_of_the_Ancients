@@ -16,6 +16,8 @@ namespace Reign_of_the_Ancients.NPCs.Elves
         private const float PreferredDistance = 300f;
         private const float ProjectileSpeed = 4f;
         private const int FrameDelay = 8;
+        private const float ObstacleClimbSpeed = 2f; // floats upward when it bumps into a wall
+        private const float NoSightVerticalSpeed = 1.5f; // drifts toward the player's height when it can't see them
 
         public override void SetStaticDefaults()
         {
@@ -35,7 +37,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             NPC.knockBackResist = 0.9f;
             NPC.aiStyle = -1;
             NPC.noGravity = true;
-            NPC.noTileCollide = true;
+            NPC.noTileCollide = false; // flies, but can't pass through blocks
             NPC.lavaImmune = false;
         }
 
@@ -90,9 +92,27 @@ namespace Reign_of_the_Ancients.NPCs.Elves
                 NPC.velocity *= 0.96f;
             }
 
-            NPC.ai[0]++;
+            bool canSee = Collision.CanHitLine(NPC.position, NPC.width, NPC.height, player.position, player.width, player.height);
+            if (!canSee)
+            {
+                float dy = player.Center.Y - NPC.Center.Y;
+                NPC.velocity.Y = MathHelper.Lerp(NPC.velocity.Y, System.Math.Sign(dy) * NoSightVerticalSpeed, 0.05f);
+            }
 
-            if (NPC.ai[0] >= FireCooldownTicks)
+            // Get around obstacles instead of grinding against them.
+            if (NPC.collideX)
+            {
+                NPC.velocity.Y = -ObstacleClimbSpeed;
+            }
+            if (NPC.collideY)
+            {
+                NPC.velocity.Y = -NPC.oldVelocity.Y * 0.5f;
+            }
+
+            // Charges up as normal, but only fires with a clear line of sight.
+            NPC.ai[0] = System.Math.Min(NPC.ai[0] + 1, FireCooldownTicks);
+
+            if (NPC.ai[0] >= FireCooldownTicks && canSee)
             {
                 NPC.ai[0] = 0;
 

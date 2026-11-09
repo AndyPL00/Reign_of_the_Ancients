@@ -20,7 +20,7 @@ namespace Reign_of_the_Ancients.Projectiles.Elves
             Projectile.friendly = false;
             Projectile.hostile = true;
             Projectile.timeLeft = 300;
-            Projectile.tileCollide = false;
+            Projectile.tileCollide = true; // stops at walls
             Projectile.penetrate = 1;
             Projectile.light = 0.4f;
             Projectile.alpha = 0;

@@ -5,17 +5,17 @@ using Terraria.ModLoader;
 
 namespace Reign_of_the_Ancients.Tiles.Library
 {
-    // Mystical Library blocks. Placeholder art: each one reuses a vanilla block texture.
-    // Swap in custom sprites by deleting the Texture override and adding a PNG next to this file.
+    // Mystical Library blocks. Most are placeholders that reuse a vanilla block texture
+    // (VanillaTileID). Leave VanillaTileID at -1 to use a PNG next to the class instead.
     public abstract class LibraryBlockBase : ModTile
     {
         public const int RequiredPickPower = 130; // Palladium pickaxe
 
-        protected abstract int VanillaTileID { get; }
+        protected virtual int VanillaTileID => -1;
         protected abstract Color MapColor { get; }
         protected virtual int BlockDust => DustID.Stone;
 
-        public override string Texture => "Terraria/Images/Tiles_" + VanillaTileID;
+        public override string Texture => VanillaTileID >= 0 ? "Terraria/Images/Tiles_" + VanillaTileID : base.Texture;
 
         public override void SetStaticDefaults()
         {
@@ -54,11 +54,27 @@ namespace Reign_of_the_Ancients.Tiles.Library
         protected override int BlockDust => DustID.Obsidian;
     }
 
-    // Volodar's arena: granite.
-    public class ArenaBrick : LibraryBlockBase
+    // Forbidden archive trim: demonite brick.
+    public class ForbiddenTrim : LibraryBlockBase
+    {
+        protected override int VanillaTileID => TileID.DemoniteBrick;
+        protected override Color MapColor => new Color(90, 60, 120);
+        protected override int BlockDust => DustID.Demonite;
+    }
+
+    // Volodar's throne room: granite (midnight blue).
+    public class ThroneBrick : LibraryBlockBase
     {
         protected override int VanillaTileID => TileID.GraniteBlock;
         protected override Color MapColor => new Color(40, 45, 75);
         protected override int BlockDust => DustID.Granite;
+    }
+
+    // Throne room trim: silver.
+    public class ThroneTrim : LibraryBlockBase
+    {
+        protected override int VanillaTileID => TileID.SilverBrick;
+        protected override Color MapColor => new Color(190, 195, 210);
+        protected override int BlockDust => DustID.Silver;
     }
 }

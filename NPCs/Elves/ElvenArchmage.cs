@@ -48,6 +48,10 @@ namespace Reign_of_the_Ancients.NPCs.Elves
         private const float TeleportMinRadius = 200f;
         private const float TeleportMaxRadius = 450f;
         private const int TeleportAttempts = 30;
+        private const int NoSightTeleportCooldownTicks = 90; // teleports sooner when it can't see the player
+
+        // Collision
+        private const float ObstacleClimbSpeed = 2f;
 
         private const int FrameDelay = 8;
 
@@ -93,7 +97,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             NPC.knockBackResist = 0.4f;
             NPC.aiStyle = -1;
             NPC.noGravity = true;
-            NPC.noTileCollide = true;
+            NPC.noTileCollide = false; // flies, but can't pass through blocks
         }
 
         public override void AI()
@@ -184,15 +188,45 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             {
                 NPC.velocity *= 0.96f;
             }
+
+            if (NPC.collideX)
+            {
+                NPC.velocity.Y = -ObstacleClimbSpeed;
+            }
+            if (NPC.collideY)
+            {
+                NPC.velocity.Y = -NPC.oldVelocity.Y * 0.5f;
+            }
+        }
+
+        private bool CanSee(Player player)
+        {
+            return Collision.CanHitLine(NPC.position, NPC.width, NPC.height, player.position, player.width, player.height);
+        }
+
+        // How far the beam reaches before hitting a solid block.
+        private float CurrentBeamLength()
+        {
+            const float step = 8f;
+            for (float d = 0f; d < BeamLength; d += step)
+            {
+                Point tile = (NPC.Center + AimDir * d).ToTileCoordinates();
+                if (WorldGen.SolidTile(tile.X, tile.Y))
+                {
+                    return d;
+                }
+            }
+            return BeamLength;
         }
 
         private void HandleIdle(Player player)
         {
             Hover(player);
 
-            Timer++;
+            Timer = Math.Min(Timer + 1, IdleTicks);
 
-            if (Timer >= IdleTicks)
+            // Only starts a cast when it has a clear line of sight.
+            if (Timer >= IdleTicks && CanSee(player))
             {
                 SetState(StateWindup);
 
@@ -287,7 +321,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
                 {
                     for (int i = 0; i < 40; i++)
                     {
-                        Vector2 pos = NPC.Center + AimDir * Main.rand.NextFloat(BeamLength);
+                        Vector2 pos = NPC.Center + AimDir * Main.rand.NextFloat(CurrentBeamLength());
                         Dust d = Dust.NewDustPerfect(pos, DustID.PurpleTorch, Main.rand.NextVector2Circular(2f, 2f), 100, default, 1.4f);
                         d.noGravity = true;
                     }
@@ -301,7 +335,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             Timer++;
 
             Vector2 start = NPC.Center;
-            Vector2 end = start + AimDir * BeamLength;
+            Vector2 end = start + AimDir * CurrentBeamLength();
 
             // Light up the beam's path
             for (float t = 0f; t <= 1f; t += 0.1f)
@@ -367,7 +401,8 @@ namespace Reign_of_the_Ancients.NPCs.Elves
         {
             teleportTimer++;
 
-            if (teleportTimer < TeleportCooldownTicks)
+            int cooldown = CanSee(player) ? TeleportCooldownTicks : NoSightTeleportCooldownTicks;
+            if (teleportTimer < cooldown)
             {
                 return;
             }
@@ -498,7 +533,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
                 color,
                 AimAngle,
                 new Vector2(0f, 0.5f),
-                new Vector2(BeamLength, thickness),
+                new Vector2(CurrentBeamLength(), thickness),
                 SpriteEffects.None,
                 0f
             );

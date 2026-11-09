@@ -19,7 +19,8 @@
 - Done: Elven Apprentice, Elf Squire, Elf High-Guard.
 - Written, needs in-game testing: Elven Archmage (spread / telegraphed beam / safe teleport), ElvenArcaneBolt.
 - Done: Elven Greatsword (held heavy swing + right-click magic slash, `MeleeMagicDamageClass`). Sprites are placeholders.
-- Written, needs in-game testing: Mystical Library (world gen in `WorldGeneration/`, debug `/buildlibrary`). Floor 1 cathedral (Apprentice, Squire), grand staircase to floor 2 forbidden archive (Archmage, High-Guard), staircase to floor 3 arena (no spawns, for Volodar). Floors are detected by wall type (`MysticalLibrary.FloorAt`). Blocks need 130 pick power (Palladium), walls unbreakable until Hardmode. Vanilla textures as placeholders. No loot yet.
+- Written, needs in-game testing (v2, beautified): Mystical Library (world gen in `WorldGeneration/`, debug `/buildlibrary`). Floor 1 white/gold cathedral with red carpet, arches, stained glass + rose window, bell towers (Apprentice, Squire). Grand staircase to floor 2 forbidden archive: obsidian/purple, sealed glowing vault (Archmage, High-Guard). Staircase to floor 3 Volodar throne room: midnight granite + silver, pillars with small balconies, blue banners, stepped dais + throne (no spawns). Floors detected by wall type (`MysticalLibrary.FloorOfWall`). Blocks need 130 pick power, walls unbreakable until Hardmode. Vanilla textures as placeholders except the carpet. Furniture placed by vanilla ItemID so styles are always right. No loot yet.
+- Apprentice and Archmage collide with blocks and only attack with line of sight; their projectiles and the beam stop at walls.
 
 ## Next up
 1. Test and tune the Archmage.

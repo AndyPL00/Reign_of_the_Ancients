@@ -24,4 +24,10 @@ Items: {
 }
 
 DamageClasses.MeleeMagicDamageClass.DisplayName: melee/magic damage
-Biomes.MysticalLibraryBiome.DisplayName: Mystical Library
+
+Biomes: {
+	MysticalLibraryBiome: {
+		DisplayName: Mystical Library
+		TownNPCDialogueName: the Mystical Library Biome
+	}
+}

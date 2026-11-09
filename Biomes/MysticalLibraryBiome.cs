@@ -24,30 +24,33 @@ namespace Reign_of_the_Ancients.Biomes
         public const int NoFloor = 0;
         public const int EntranceHall = 1;
         public const int ForbiddenArchive = 2;
-        public const int Arena = 3;
+        public const int ThroneRoom = 3;
 
         // Which library floor a tile belongs to, based on its background wall.
         public static int FloorAt(int x, int y)
         {
-            if (!WorldGen.InWorld(x, y))
-            {
-                return NoFloor;
-            }
+            return WorldGen.InWorld(x, y) ? FloorOfWall(Main.tile[x, y].WallType) : NoFloor;
+        }
 
-            int wall = Main.tile[x, y].WallType;
-            if (wall == ModContent.WallType<LibraryWall>() || wall == ModContent.WallType<LibraryWindowWall>())
+        public static int FloorOfWall(int wall)
+        {
+            if (wall == ModContent.WallType<LibraryWall>() ||
+                wall == ModContent.WallType<LibraryWindowWall>() ||
+                wall == ModContent.WallType<LibraryRoseWindowWall>())
             {
                 return EntranceHall;
             }
-            if (wall == ModContent.WallType<ForbiddenLibraryWall>())
+            if (wall == ModContent.WallType<ForbiddenLibraryWall>() ||
+                wall == ModContent.WallType<VaultWall>() ||
+                wall == ModContent.WallType<VaultFenceWall>())
             {
                 return ForbiddenArchive;
             }
-            if (wall == ModContent.WallType<LibraryArenaWall>())
+            if (wall == ModContent.WallType<ThroneRoomWall>() ||
+                wall == ModContent.WallType<ThroneBackdropWall>())
             {
-                return Arena;
+                return ThroneRoom;
             }
-
             return NoFloor;
         }
     }
