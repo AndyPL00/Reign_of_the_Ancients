@@ -3,6 +3,8 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.DataStructures;
+using Terraria.GameContent.ItemDropRules;
+using Reign_of_the_Ancients.Items.Weapons;
 
 namespace Reign_of_the_Ancients.NPCs.Elves
 {
@@ -223,7 +225,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)
         {
-            // npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ElvenGreatsword>(), 1));
+            npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ElvenGreatsword>(), 1));
         }
 
         public override float SpawnChance(NPCSpawnInfo spawnInfo)

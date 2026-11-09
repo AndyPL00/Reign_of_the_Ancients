@@ -17,11 +17,12 @@
 ## Status (Reign of the Elves, Pre-Hardmode, after the Evil boss)
 - Done: Elven Apprentice, Elf Squire, Elf High-Guard.
 - Written, needs in-game testing: Elven Archmage (spread / telegraphed beam / safe teleport), ElvenArcaneBolt.
+- Written, needs in-game testing: Elven Greatsword (held heavy swing + right-click magic slash, `MeleeMagicDamageClass`). Sprites are placeholders.
 - All `SpawnChance` return 0f until the Mystical Library biome exists.
 
 ## Next up
 1. Test and tune the Archmage.
-2. Elven Greatsword (High-Guard drop; loot line is commented out in `ModifyNPCLoot`).
+2. Test and tune the Elven Greatsword; replace placeholder sprites.
 3. Mystical Library: pre-built structure + spawn conditions.
 4. Volodar boss (mage-archer) and his signature bow. Aim for a flashy, Calamity-style feel.
 

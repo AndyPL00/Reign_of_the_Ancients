@@ -8,4 +8,21 @@ NPCs: {
 Projectiles: {
 	ElvenFireball.DisplayName: Elven Fireball
 	ElvenArcaneBolt.DisplayName: Arcane Bolt
+	ElvenGreatswordSwing.DisplayName: Elven Greatsword
+	ElvenMagicSlash.DisplayName: Magic Slash
+}
+
+Items: {
+	ElvenGreatsword: {
+		DisplayName: Elven Greatsword
+		Tooltip:
+			'''
+			Right click to swing out a magic slash that costs mana
+			The slash scales with both melee and magic damage
+			'''
+	}
+}
+
+DamageClasses: {
+	MeleeMagicDamageClass.DisplayName: melee/magic damage
 }
