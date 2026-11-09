@@ -1411,6 +1411,18 @@ namespace Reign_of_the_Ancients.WorldGeneration
         private static int ThroneX(LibraryLayout l) => FromFarWall(l, (DaisWidth - (DaisTiers - 1) * DaisTierStep) / 2);
         private static int DaisTop(LibraryLayout l) => l.ThroneRoom.Bottom - DaisTiers * DaisTierHeight;
 
+        // ---- Used by Volodar ----
+
+        // Tile the throne stands on: x = throne center column, y = top of the dais.
+        public static Point ThroneTile(LibraryLayout l) => new Point(ThroneX(l), DaisTop(l));
+
+        // Bottom interior tile just inside the doorway the second staircase comes through.
+        public static Point ThroneRoomEntrance(LibraryLayout l)
+        {
+            int x = l.Side > 0 ? l.ThroneRoom.Right - 1 : l.ThroneRoom.X;
+            return new Point(x, l.ThroneRoom.Bottom - 1);
+        }
+
         // ================= Helpers =================
 
         // Keeps columns and furniture out of the hall floor opening above the first staircase.

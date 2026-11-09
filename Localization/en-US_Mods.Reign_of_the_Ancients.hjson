@@ -3,6 +3,7 @@ NPCs: {
 	ElfSquire.DisplayName: Elf Squire
 	ElfHighGuard.DisplayName: Elf High-Guard
 	ElvenArchmage.DisplayName: Elven Archmage
+	Volodar.DisplayName: Volodar
 }
 
 Projectiles: {
@@ -10,6 +11,11 @@ Projectiles: {
 	ElvenArcaneBolt.DisplayName: Arcane Bolt
 	ElvenGreatswordSwing.DisplayName: Elven Greatsword
 	ElvenMagicSlash.DisplayName: Magic Slash
+	VolodarArrow.DisplayName: Volodar's Arrow
+	VolodarRune.DisplayName: Arcane Rune
+	VolodarOrb.DisplayName: Arcane Orb
+	VolodarBeam.DisplayName: Arcane Beam
+	VolodarSpectralArcher.DisplayName: Spectral Archer
 }
 
 Items: {
@@ -20,6 +26,20 @@ Items: {
 			Right click to swing out a magic slash that costs mana
 			The slash scales with both melee and magic damage
 			'''
+	}
+
+	SealedTome: {
+		DisplayName: Sealed Tome
+		Tooltip:
+			'''
+			Summons Volodar
+			Only works in the throne room of the Mystical Library
+			'''
+	}
+
+	ElvenEssence: {
+		DisplayName: Elven Essence
+		Tooltip: Dropped by the elves of the Mystical Library
 	}
 }
 
