@@ -36,18 +36,23 @@ namespace Reign_of_the_Ancients.Biomes
         {
             if (wall == ModContent.WallType<LibraryWall>() ||
                 wall == ModContent.WallType<LibraryWindowWall>() ||
-                wall == ModContent.WallType<LibraryRoseWindowWall>())
+                wall == ModContent.WallType<LibraryRoseWindowWall>() ||
+                wall == ModContent.WallType<HallPillarWall>())
             {
                 return EntranceHall;
             }
             if (wall == ModContent.WallType<ForbiddenLibraryWall>() ||
                 wall == ModContent.WallType<VaultWall>() ||
-                wall == ModContent.WallType<VaultFenceWall>())
+                wall == ModContent.WallType<VaultFenceWall>() ||
+                wall == ModContent.WallType<ArchivePillarWall>() ||
+                wall == ModContent.WallType<ArchiveNicheWall>())
             {
                 return ForbiddenArchive;
             }
             if (wall == ModContent.WallType<ThroneRoomWall>() ||
-                wall == ModContent.WallType<ThroneBackdropWall>())
+                wall == ModContent.WallType<ThroneBackdropWall>() ||
+                wall == ModContent.WallType<ThronePillarWall>() ||
+                wall == ModContent.WallType<ThroneStarWall>())
             {
                 return ThroneRoom;
             }

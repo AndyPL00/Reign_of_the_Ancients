@@ -65,7 +65,28 @@ namespace Reign_of_the_Ancients.Walls.Library
         protected override Color MapColor => new Color(130, 70, 170);
     }
 
+    // Gold backing behind the hall's marble pillars (base, capital and shaft).
+    public class HallPillarWall : LibraryWallBase
+    {
+        protected override int VanillaWallID => WallID.GoldBrick;
+        protected override Color MapColor => new Color(190, 150, 60);
+    }
+
     // ----- Floor 2: forbidden archive -----
+
+    // Demonite backing behind the archive's pillars, also used for wall bands.
+    public class ArchivePillarWall : LibraryWallBase
+    {
+        protected override int VanillaWallID => WallID.DemoniteBrick;
+        protected override Color MapColor => new Color(70, 50, 100);
+    }
+
+    // Dark wood inside the arched alcoves that hold the shelves.
+    public class ArchiveNicheWall : LibraryWallBase
+    {
+        protected override int VanillaWallID => WallID.Shadewood;
+        protected override Color MapColor => new Color(45, 35, 55);
+    }
 
     public class ForbiddenLibraryWall : LibraryWallBase
     {
@@ -94,6 +115,21 @@ namespace Reign_of_the_Ancients.Walls.Library
     {
         protected override int VanillaWallID => WallID.GraniteBlock;
         protected override Color MapColor => new Color(30, 32, 55);
+    }
+
+    // Silver backing behind the throne room's pillars.
+    public class ThronePillarWall : LibraryWallBase
+    {
+        protected override int VanillaWallID => WallID.SilverBrick;
+        protected override Color MapColor => new Color(160, 165, 180);
+    }
+
+    // Single glowing "stars" scattered across the vaulted ceiling.
+    public class ThroneStarWall : LibraryWallBase
+    {
+        protected override int VanillaWallID => WallID.DiamondGemspark;
+        protected override Color MapColor => new Color(170, 200, 255);
+        protected override Vector3 Glow => new Vector3(0.12f, 0.18f, 0.4f);
     }
 
     // Glowing midnight-blue arch behind the throne.

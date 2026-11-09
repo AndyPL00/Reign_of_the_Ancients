@@ -100,7 +100,27 @@ namespace Reign_of_the_Ancients.WorldGeneration
         public const int BackdropHeight = 20;
 
         private static ushort hallBrick, hallTrim, carpet, forbiddenBrick, forbiddenTrim, throneBrick, throneTrim;
+        // ---- Pillars (walk-through: decorative column tiles in front of a stepped wall silhouette) ----
+        public const int PillarShaftHalfWidth = 1;  // 3-wide shaft
+        public const int PillarFootHalfWidth = 3;   // 7-wide outer step of the base and capital
+        public const int PillarStepHalfWidth = 2;   // 5-wide inner step
+
+        // ---- Archive architecture ----
+        public const int LowerNicheHalfWidth = 4;   // arched alcoves under the gallery
+        public const int UpperNicheHalfWidth = 3;   // arched alcoves above the gallery
+
+        // ---- Throne room extras ----
+        public const int BalconyWideHalfWidth = 4;  // pillar balconies are 9 wide
+        public const int WallLedgeWidth = 6;        // ledges on the entrance-side wall
+        public const int StarBandDepth = 14;        // how far below the arches the night sky reaches
+        public const float StarChance = 0.05f;
+
+        private static readonly int[] BalconyHeightsEven = { 9, 23 };
+        private static readonly int[] BalconyHeightsOdd = { 16, 30 };
+        private static readonly int[] WallLedgeHeights = { 12, 26 };
+
         private static ushort hallWall, windowWall, roseWall, forbiddenWall, vaultWall, vaultFence, throneWall, backdropWall;
+        private static ushort hallPillarWall, archivePillarWall, nicheWall, thronePillarWall, starWall;
 
         // ================= Planning =================
 
@@ -202,6 +222,11 @@ namespace Reign_of_the_Ancients.WorldGeneration
             vaultFence = (ushort)ModContent.WallType<VaultFenceWall>();
             throneWall = (ushort)ModContent.WallType<ThroneRoomWall>();
             backdropWall = (ushort)ModContent.WallType<ThroneBackdropWall>();
+            hallPillarWall = (ushort)ModContent.WallType<HallPillarWall>();
+            archivePillarWall = (ushort)ModContent.WallType<ArchivePillarWall>();
+            nicheWall = (ushort)ModContent.WallType<ArchiveNicheWall>();
+            thronePillarWall = (ushort)ModContent.WallType<ThronePillarWall>();
+            starWall = (ushort)ModContent.WallType<ThroneStarWall>();
         }
 
         // ================= Terrain and shells =================
@@ -368,9 +393,16 @@ namespace Reign_of_the_Ancients.WorldGeneration
                     depth[x - room.X] = (int)Math.Round(archHeight * (1 - Math.Sqrt(Math.Max(0f, 1f - d * d))));
                 }
             }
+            // Flat under the whole pillar shaft so the column meets the arch cleanly.
             foreach (int p in pillars)
             {
-                depth[p - room.X] = archHeight;
+                for (int x = p - PillarShaftHalfWidth; x <= p + PillarShaftHalfWidth; x++)
+                {
+                    if (x >= room.X && x < room.Right)
+                    {
+                        depth[x - room.X] = archHeight;
+                    }
+                }
             }
 
             for (int x = room.X; x < room.Right; x++)
@@ -386,11 +418,57 @@ namespace Reign_of_the_Ancients.WorldGeneration
 
         private static int HangY(Rectangle room, int[] depth, int x) => room.Y + depth[x - room.X];
 
-        private static void PillarColumn(Rectangle room, int[] depth, int x, int tileType)
+        // Thick walk-through pillar: a 3-wide shaft of decorative column tiles in front of a wall
+        // silhouette that steps out at the base and the capital (7 wide, then 5, then the 3-wide shaft).
+        private static void ThickPillar(Rectangle room, int archHeight, int p, int columnTile, ushort pillarWall, byte paint = 0)
         {
-            for (int y = HangY(room, depth, x); y < room.Bottom; y++)
+            int top = room.Y + archHeight;
+            int floor = room.Bottom;
+            for (int y = top; y < floor; y++)
             {
-                SetTile(x, y, tileType);
+                int halfWidth = PillarShaftHalfWidth;
+                if (y == top || y == floor - 1)
+                {
+                    halfWidth = PillarFootHalfWidth;
+                }
+                else if (y == top + 1 || y == floor - 2)
+                {
+                    halfWidth = PillarStepHalfWidth;
+                }
+
+                for (int x = p - halfWidth; x <= p + halfWidth; x++)
+                {
+                    if (x >= room.X && x < room.Right)
+                    {
+                        SetWall(x, y, pillarWall);
+                    }
+                }
+                for (int x = p - PillarShaftHalfWidth; x <= p + PillarShaftHalfWidth; x++)
+                {
+                    SetTile(x, y, columnTile);
+                    Tile tile = Main.tile[x, y];
+                    tile.TileColor = paint;
+                }
+            }
+        }
+
+        // Arched alcove in the back wall: a pointed shape framed by `frameWall`, filled with `fillWall`.
+        private static void Niche(int cx, int top, int bottom, int halfWidth, ushort frameWall, ushort fillWall)
+        {
+            NicheShape(cx, top - 1, bottom, halfWidth + 1, frameWall);
+            NicheShape(cx, top, bottom, halfWidth, fillWall);
+        }
+
+        private static void NicheShape(int cx, int top, int bottom, int halfWidth, ushort wall)
+        {
+            for (int y = top; y <= bottom; y++)
+            {
+                int row = y - top;
+                int hw = row == 0 ? Math.Max(0, halfWidth - 2) : row == 1 ? halfWidth - 1 : halfWidth;
+                for (int x = cx - hw; x <= cx + hw; x++)
+                {
+                    SetWall(x, y, wall);
+                }
             }
         }
 
@@ -502,7 +580,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
             {
                 if (!NearStairMouth(l, p))
                 {
-                    PillarColumn(hall, arch, p, TileID.MarbleColumn);
+                    ThickPillar(hall, HallArchHeight, p, TileID.MarbleColumn, hallPillarWall);
                 }
             }
 
@@ -619,15 +697,16 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 }
             }
 
-            // Red banners either side of each column, white torches on the columns.
+            // Red banners and white torches either side of each pillar.
+            int side = PillarFootHalfWidth + 1;
             foreach (int p in pillars)
             {
-                Place(p - 2, HangY(hall, arch, p - 2), ItemID.RedBanner);
-                Place(p + 2, HangY(hall, arch, p + 2), ItemID.RedBanner);
+                Place(p - side, HangY(hall, arch, p - side), ItemID.RedBanner);
+                Place(p + side, HangY(hall, arch, p + side), ItemID.RedBanner);
                 if (!NearStairMouth(l, p))
                 {
-                    torches.Add((p - 1, floor - 7, ItemID.WhiteTorch));
-                    torches.Add((p + 1, floor - 7, ItemID.WhiteTorch));
+                    torches.Add((p - side, floor - 7, ItemID.WhiteTorch));
+                    torches.Add((p + side, floor - 7, ItemID.WhiteTorch));
                 }
             }
         }
@@ -641,17 +720,48 @@ namespace Reign_of_the_Ancients.WorldGeneration
             int galleryY = floor - GalleryHeight;
             int platform = Style(ItemID.ObsidianPlatform);
             var bays = Bays(archive, pillars);
+            int vaultBay = bays.Count / 2;
+
+            // Demonite wall bands: a dado along the floor and a beam under the gallery.
+            for (int x = archive.X; x < archive.Right; x++)
+            {
+                SetWall(x, floor - 1, archivePillarWall);
+                SetWall(x, floor - 2, archivePillarWall);
+                SetWall(x, galleryY + 1, archivePillarWall);
+            }
+
+            // Arched alcoves for the shelves: one under the gallery, one above it, in every bay.
+            for (int b = 0; b < bays.Count; b++)
+            {
+                int center = bays[b].center;
+                if (b != vaultBay)
+                {
+                    Niche(center, galleryY + 4, floor - 3, LowerNicheHalfWidth, archivePillarWall, nicheWall);
+                }
+                Niche(center, archive.Y + 3, galleryY - 1, UpperNicheHalfWidth, archivePillarWall, nicheWall);
+            }
+
+            // Sealed vault in the middle bay: glowing purple backdrop framed by iron bars.
+            var vault = bays[vaultBay];
+            for (int x = vault.a + 4; x <= vault.c - 4; x++)
+            {
+                for (int y = galleryY + 2; y < floor; y++)
+                {
+                    bool frame = x == vault.a + 4 || x == vault.c - 4 || y == galleryY + 2;
+                    SetWall(x, y, frame ? vaultFence : vaultWall);
+                }
+            }
 
             foreach (int p in pillars)
             {
-                PillarColumn(archive, arch, p, TileID.GraniteColumn);
+                ThickPillar(archive, ArchiveArchHeight, p, TileID.GraniteColumn, archivePillarWall, PaintID.DeepPurplePaint);
             }
 
-            // Gallery along the whole room; some bays have a gap with ladder platforms.
+            // Gallery along the whole room; ladder bays get a gap with platforms up from the floor.
             for (int b = 0; b < bays.Count; b++)
             {
                 var (a, c, center) = bays[b];
-                bool ladderBay = b % ArchiveLadderEvery == 1 && b != bays.Count / 2; // not over the vault
+                bool ladderBay = IsArchiveLadderBay(b, vaultBay);
                 for (int x = Math.Max(a, archive.X); x < Math.Min(c + 1, archive.Right); x++)
                 {
                     if (ladderBay && Math.Abs(x - center) <= 3)
@@ -665,17 +775,6 @@ namespace Reign_of_the_Ancients.WorldGeneration
                     {
                         SetPlatform(x, galleryY, platform);
                     }
-                }
-            }
-
-            // Sealed vault in the middle bay: glowing purple backdrop framed by iron bars.
-            var vault = bays[bays.Count / 2];
-            for (int x = vault.a + 3; x <= vault.c - 3; x++)
-            {
-                for (int y = galleryY + 1; y < floor; y++)
-                {
-                    bool frame = x == vault.a + 3 || x == vault.c - 3 || y == galleryY + 1;
-                    SetWall(x, y, frame ? vaultFence : vaultWall);
                 }
             }
 
@@ -712,69 +811,78 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
+        private static bool IsArchiveLadderBay(int bay, int vaultBay) => bay % ArchiveLadderEvery == 1 && bay != vaultBay;
+
         private static void ArchiveFurniture(LibraryLayout l, List<int> pillars, int[] arch, List<(int, int, int)> torches)
         {
             Rectangle archive = l.Archive;
             int floor = archive.Bottom;
             int galleryY = floor - GalleryHeight;
             var bays = Bays(archive, pillars);
+            int vaultBay = bays.Count / 2;
+            int outside = LowerNicheHalfWidth + 3; // bookcases flanking each lower alcove
 
             for (int b = 0; b < bays.Count; b++)
             {
                 var (a, c, center) = bays[b];
 
-                // Alternate dim lighting: lanterns and the odd obsidian chandelier.
+                // Dim lighting: lanterns, with an obsidian chandelier every other bay.
                 Place(center, HangY(archive, arch, center), b % 2 == 0 ? ItemID.ObsidianChandelier : ItemID.ObsidianLantern);
 
-                if (b == bays.Count / 2)
+                if (b == vaultBay)
                 {
                     // Inside the vault: a bewitching table with a crystal ball, guarded by shelves.
                     Place(center, floor - 1, ItemID.BewitchingTable);
                     Place(center, floor - 3, ItemID.CrystalBall);
-                    Place(center - 5, floor - 1, ItemID.ObsidianBookcase);
-                    Place(center + 5, floor - 1, ItemID.ObsidianBookcase);
-                }
-                else if (b % ArchiveLadderEvery == 2)
-                {
-                    // Abandoned study: table with a water candle, a chair, an alchemy table.
-                    Place(center - 2, floor - 1, ItemID.ObsidianTable);
-                    PlaceSingle(center - 2, floor - 3, ItemID.WaterCandle);
-                    Place(center - 5, floor - 1, ItemID.ObsidianChair, 1);
-                    Place(center + 3, floor - 1, ItemID.AlchemyTable);
-                    Place(a + 3, floor - 1, ItemID.ObsidianBookcase);
-                    Place(c - 3, floor - 1, ItemID.ObsidianBookcase);
+                    Place(center - 4, floor - 1, ItemID.ObsidianBookcase);
+                    Place(center + 4, floor - 1, ItemID.ObsidianBookcase);
                 }
                 else
                 {
-                    for (int x = a + 4; x < c - 2; x += 4)
+                    if (b % ArchiveLadderEvery == 2)
                     {
+                        // Abandoned study in the alcove.
+                        Place(center, floor - 1, ItemID.ObsidianTable);
+                        PlaceSingle(center, floor - 3, ItemID.WaterCandle);
+                        Place(center - 3, floor - 1, ItemID.ObsidianChair, 1);
+                        Place(center + 3, floor - 1, ItemID.ObsidianLamp);
+                    }
+                    else if (!IsArchiveLadderBay(b, vaultBay))
+                    {
+                        // Two shelves in the alcove (some missing).
                         if (WorldGen.genRand.NextFloat() < ArchiveBookcaseChance)
                         {
-                            Place(x, floor - 1, ItemID.ObsidianBookcase);
+                            Place(center - 2, floor - 1, ItemID.ObsidianBookcase);
+                        }
+                        if (WorldGen.genRand.NextFloat() < ArchiveBookcaseChance)
+                        {
+                            Place(center + 2, floor - 1, ItemID.ObsidianBookcase);
                         }
                     }
+
+                    // Shelves standing either side of the alcove.
+                    Place(center - outside, floor - 1, ItemID.ObsidianBookcase);
+                    Place(center + outside, floor - 1, ItemID.ObsidianBookcase);
                 }
 
-                // Gallery shelves, some missing, with loose books and lamps.
-                for (int x = a + 4; x < c - 2; x += 6)
+                // Upper alcove: a shelf framed by loose books, lamps either side.
+                if (WorldGen.genRand.NextFloat() < ArchiveBookcaseChance)
                 {
-                    if (WorldGen.genRand.NextFloat() < ArchiveBookcaseChance)
-                    {
-                        Place(x, galleryY - 1, ItemID.ObsidianBookcase);
-                    }
-                    else
-                    {
-                        PlaceBooks(x, galleryY - 1);
-                    }
+                    Place(center, galleryY - 1, ItemID.ObsidianBookcase);
                 }
-                Place(center, galleryY - 1, ItemID.ObsidianLamp);
+                PlaceBooks(center - 2, galleryY - 1);
+                PlaceBooks(center + 2, galleryY - 1);
+                Place(center - UpperNicheHalfWidth - 2, galleryY - 1, ItemID.ObsidianLamp);
+                Place(center + UpperNicheHalfWidth + 2, galleryY - 1, ItemID.ObsidianLamp);
             }
 
-            for (int i = 0; i < pillars.Count; i++)
+            int side = PillarFootHalfWidth + 1;
+            foreach (int p in pillars)
             {
-                int y = i % 2 == 0 ? floor - 7 : galleryY - 6;
-                torches.Add((pillars[i] - 1, y, ItemID.PurpleTorch));
-                torches.Add((pillars[i] + 1, y, ItemID.PurpleTorch));
+                torches.Add((p - side, floor - 6, ItemID.PurpleTorch));
+                torches.Add((p + side, floor - 6, ItemID.PurpleTorch));
+                torches.Add((p - side, galleryY - 5, ItemID.PurpleTorch));
+                torches.Add((p + side, galleryY - 5, ItemID.PurpleTorch));
             }
         }
 
@@ -786,9 +894,28 @@ namespace Reign_of_the_Ancients.WorldGeneration
             int floor = room.Bottom;
             int platform = Style(ItemID.GranitePlatform);
 
+            // Night sky: the upper part of the room is painted deep blue and scattered with glowing stars.
+            int skyBottom = room.Y + ThroneArchHeight + StarBandDepth;
+            for (int x = room.X; x < room.Right; x++)
+            {
+                int top = HangY(room, arch, x);
+                for (int y = top; y < skyBottom; y++)
+                {
+                    Tile tile = Main.tile[x, y];
+                    tile.WallColor = PaintID.DeepBluePaint;
+                    // Stars thin out toward the bottom of the band.
+                    float density = StarChance * (1f - (y - top) / (float)(skyBottom - top + 1));
+                    if (WorldGen.genRand.NextFloat() < density)
+                    {
+                        tile.WallType = starWall;
+                        tile.WallColor = 0;
+                    }
+                }
+            }
+
             foreach (int p in pillars)
             {
-                PillarColumn(room, arch, p, TileID.GraniteColumn);
+                ThickPillar(room, ThroneArchHeight, p, TileID.GraniteColumn, thronePillarWall);
             }
 
             // Stepped dais against the far wall, silver-edged.
@@ -816,10 +943,12 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 for (int x = throneX - halfWidth; x <= throneX + halfWidth; x++)
                 {
                     SetWall(x, y, backdropWall);
+                    Tile tile = Main.tile[x, y];
+                    tile.WallColor = 0;
                 }
             }
 
-            // Small balconies on the pillars, alternating heights. None over the dais.
+            // Balconies on every pillar, two per pillar at staggered heights so they can be climbed.
             for (int i = 0; i < pillars.Count; i++)
             {
                 int p = pillars[i];
@@ -827,10 +956,21 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 {
                     continue;
                 }
-                int y = floor - (i % 2 == 0 ? BalconyLow : BalconyHigh);
-                for (int x = p - BalconyHalfWidth; x <= p + BalconyHalfWidth; x++)
+                foreach (int height in i % 2 == 0 ? BalconyHeightsEven : BalconyHeightsOdd)
                 {
-                    SetPlatform(x, y, platform);
+                    for (int x = p - BalconyWideHalfWidth; x <= p + BalconyWideHalfWidth; x++)
+                    {
+                        SetPlatform(x, floor - height, platform);
+                    }
+                }
+            }
+
+            // Ledges on the entrance-side wall.
+            foreach (int height in WallLedgeHeights)
+            {
+                for (int offset = 0; offset < WallLedgeWidth; offset++)
+                {
+                    SetPlatform(FromFarWall(l, ThroneRoomWidth - 1 - offset), floor - height, platform);
                 }
             }
         }
@@ -861,14 +1001,15 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 }
             }
 
+            int side = PillarFootHalfWidth + 1;
             foreach (int p in pillars)
             {
-                Place(p - 2, HangY(room, arch, p - 2), ItemID.BlueBanner);
-                Place(p + 2, HangY(room, arch, p + 2), ItemID.BlueBanner);
+                Place(p - side, HangY(room, arch, p - side), ItemID.BlueBanner);
+                Place(p + side, HangY(room, arch, p + side), ItemID.BlueBanner);
                 if (DistanceFromFarWall(l, p) >= DaisWidth + 2)
                 {
-                    torches.Add((p - 1, floor - 7, ItemID.BlueTorch));
-                    torches.Add((p + 1, floor - 7, ItemID.BlueTorch));
+                    torches.Add((p - side, floor - 6, ItemID.BlueTorch));
+                    torches.Add((p + side, floor - 6, ItemID.BlueTorch));
                 }
             }
         }
@@ -939,6 +1080,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
             tile.IsHalfBlock = false;
             tile.TileFrameX = 0;
             tile.TileFrameY = 0;
+            tile.TileColor = 0;
             tile.LiquidAmount = 0;
         }
 
@@ -946,6 +1088,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
         {
             Tile tile = Main.tile[x, y];
             tile.WallType = wall;
+            tile.WallColor = 0;
         }
 
         // Platform of the given style; may replace a decorative column but nothing else.
