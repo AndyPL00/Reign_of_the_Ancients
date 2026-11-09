@@ -13,7 +13,8 @@ namespace Reign_of_the_Ancients.Items.Weapons
     // Right click: same swing, costs mana and releases a magic slash that scales with melee + magic damage.
     public class ElvenGreatsword : ModItem
     {
-        public const int BaseDamage = 34;
+        public const int BaseDamage = 42;
+        public const float SwordScale = 1.25f;     // visual size and hitbox reach of the swing
         public const int UseTimeTicks = 40;          // also the right-click cooldown (same item use time)
         public const float BaseKnockback = 7.5f;
         public const int ManaCost = 15;
@@ -28,6 +29,7 @@ namespace Reign_of_the_Ancients.Items.Weapons
             Item.width = 64;
             Item.height = 64;
             Item.damage = BaseDamage;
+            Item.scale = SwordScale;
             Item.DamageType = DamageClass.Melee;
             Item.knockBack = BaseKnockback;
             Item.useTime = UseTimeTicks;
