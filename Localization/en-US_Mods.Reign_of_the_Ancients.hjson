@@ -3,6 +3,7 @@ NPCs: {
 	ElfSquire.DisplayName: Elf Squire
 	ElfHighGuard.DisplayName: Elf High-Guard
 	ElvenArchmage.DisplayName: Elven Archmage
+
 	Volodar: {
 		DisplayName: Volodar
 		# Chat lines. Placeholders: Andy writes these. Leave a line empty ("") to skip it.
@@ -12,14 +13,9 @@ NPCs: {
 	}
 }
 
-Bestiary: {
-	# Placeholder: Andy writes the lore.
-	Volodar: "[Placeholder bestiary entry for Volodar.]"
-}
-
-BossChecklist: {
-	Volodar.SpawnInfo: Use a [i:Reign_of_the_Ancients/SealedTome] Sealed Tome in the throne room of the Mystical Library.
-}
+# Placeholder: Andy writes the lore.
+Bestiary.Volodar: "[Placeholder bestiary entry for Volodar.]"
+BossChecklist.Volodar.SpawnInfo: Use a [i:Reign_of_the_Ancients/SealedTome] Sealed Tome in the throne room of the Mystical Library.
 
 Projectiles: {
 	ElvenFireball.DisplayName: Elven Fireball
@@ -76,9 +72,20 @@ Items: {
 		Tooltip: Firing a ranged weapon summons a spectral archer that shoots the nearest enemy
 	}
 
-	VolodarTrophy.DisplayName: Volodar Trophy
-	VolodarRelic.DisplayName: Volodar Relic
-	VolodarMask.DisplayName: Volodar Mask
+	VolodarTrophy: {
+		DisplayName: Volodar Trophy
+		Tooltip: ""
+	}
+
+	VolodarRelic: {
+		DisplayName: Volodar Relic
+		Tooltip: ""
+	}
+
+	VolodarMask: {
+		DisplayName: Volodar Mask
+		Tooltip: ""
+	}
 
 	VolodarBag: {
 		DisplayName: Treasure Bag (Volodar)
