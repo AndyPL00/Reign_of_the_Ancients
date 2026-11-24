@@ -13,6 +13,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
     public class ElfHighGuard : ModNPC
     {
         private const float LibrarySpawnChance = 0.8f; // relative weight vs. other elves on the same floor
+        private const int GreatswordChance = 30;       // 1 in N (~3.3%) Elven Greatsword drop
         private const float WalkSpeed = 1.2f;
         private const float ThrustRange = 90f;
         private const int WindupTicks = 40;
@@ -229,7 +230,7 @@ namespace Reign_of_the_Ancients.NPCs.Elves
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)
         {
-            npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ElvenGreatsword>(), 1));
+            npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ElvenGreatsword>(), GreatswordChance));
         }
 
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
