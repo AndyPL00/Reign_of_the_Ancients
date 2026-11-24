@@ -31,6 +31,24 @@ Projectiles: {
 	ArcaneShard.DisplayName: Arcane Shard
 	ArcaneOrb.DisplayName: Arcane Orb
 	SpectralArcherAlly.DisplayName: Spectral Archer
+	ElvenSpectralArrow.DisplayName: Spectral Arrow
+}
+
+# Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
+ElvenOreSpawned: "[Placeholder] Your world has been blessed with Elven Ore!"
+
+Tiles.ElvenOreTile.MapEntry: Elven Ore
+
+Buffs: {
+	SpellweaveChargedBuff: {
+		DisplayName: Spellweave
+		Description: Your next magic attack costs no mana and deals {0}% more damage
+	}
+
+	SpellweaveHasteBuff: {
+		DisplayName: Spellweave Haste
+		Description: "{0}% increased melee speed"
+	}
 }
 
 Items: {
@@ -90,6 +108,94 @@ Items: {
 	VolodarBag: {
 		DisplayName: Treasure Bag (Volodar)
 		Tooltip: "{$CommonItemTooltip.RightClickToOpen}"
+	}
+
+	# ---- Elven ore tier (all names are placeholders) ----
+	ElvenOre: {
+		DisplayName: Elven Ore
+		Tooltip: ""
+	}
+
+	ElvenBar: {
+		DisplayName: Elven Bar
+		Tooltip: ""
+	}
+
+	ArcaneCrystal: {
+		DisplayName: Arcane Crystal
+		Tooltip: Dropped by the Elven Archmage
+	}
+
+	ElvenPickaxe: {
+		DisplayName: Elven Pickaxe
+		Tooltip: ""
+	}
+
+	ElvenWaraxe: {
+		DisplayName: Elven Waraxe
+		Tooltip: ""
+	}
+
+	ElvenHammer: {
+		DisplayName: Elven Hammer
+		Tooltip: ""
+	}
+
+	SpellbladeHelmet: {
+		DisplayName: Spellblade Helmet
+		Tooltip:
+			'''
+			{0}% increased melee and magic damage
+			Increases maximum mana by {1}
+			'''
+		SetBonus:
+			'''
+			Spellweave: melee hits build an arcane charge
+			After {0} hits, your next magic attack costs no mana and deals {1}% more damage
+			Magic hits grant {2}% melee speed for {3} seconds
+			'''
+	}
+
+	SpellbladeBreastplate: {
+		DisplayName: Spellblade Breastplate
+		Tooltip: "{0}% increased melee and magic critical strike chance"
+	}
+
+	SpellbladeGreaves: {
+		DisplayName: Spellblade Greaves
+		Tooltip:
+			'''
+			{0}% increased melee speed
+			{1}% increased movement speed
+			'''
+	}
+
+	ElvenRangerHood: {
+		DisplayName: Elven Ranger Hood
+		Tooltip: "{0}% increased ranged damage"
+		SetBonus:
+			'''
+			Arcane Volley: every {0}th ranged shot also fires {1} homing spectral arrows
+			Spectral arrows deal {2}% of the shot's damage
+			'''
+	}
+
+	ElvenRangerTunic: {
+		DisplayName: Elven Ranger Tunic
+		Tooltip:
+			'''
+			{0}% increased ranged critical strike chance
+			{1}% chance not to consume ammo
+			'''
+	}
+
+	ElvenRangerLeggings: {
+		DisplayName: Elven Ranger Leggings
+		Tooltip:
+			'''
+			{0}% increased ranged damage
+			{1}% increased movement speed
+			'''
 	}
 }
 

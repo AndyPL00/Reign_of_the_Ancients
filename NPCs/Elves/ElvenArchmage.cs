@@ -5,10 +5,12 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.GameContent;
+using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.Common;
+using Reign_of_the_Ancients.Items.Materials;
 using Reign_of_the_Ancients.Projectiles.Elves;
 
 namespace Reign_of_the_Ancients.NPCs.Elves
@@ -20,6 +22,12 @@ namespace Reign_of_the_Ancients.NPCs.Elves
     public class ElvenArchmage : ModNPC
     {
         private const float LibrarySpawnChance = 0.5f; // relative weight vs. other elves on the same floor
+
+        // Arcane Crystal drop: 1 in N chance, min-max amount
+        private const int CrystalChance = 2;
+        private const int CrystalMinAmount = 1;
+        private const int CrystalMaxAmount = 2;
+
         // Movement
         private const float DetectRange = 800f;
         private const float PreferredDistance = 380f;
@@ -559,6 +567,12 @@ namespace Reign_of_the_Ancients.NPCs.Elves
         public override float SpawnChance(NPCSpawnInfo spawnInfo)
         {
             return MysticalLibrarySpawns.Chance(spawnInfo, MysticalLibrary.ForbiddenArchive, LibrarySpawnChance);
+        }
+
+        // Arcane Crystal for the Elven Ranger armor. (Elven Essence is handled in ElvenEssenceDrops.)
+        public override void ModifyNPCLoot(NPCLoot npcLoot)
+        {
+            npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<ArcaneCrystal>(), CrystalChance, CrystalMinAmount, CrystalMaxAmount));
         }
     }
 }

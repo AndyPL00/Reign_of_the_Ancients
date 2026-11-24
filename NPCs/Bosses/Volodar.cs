@@ -743,7 +743,12 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         public override void OnKill()
         {
             Say("DefeatLine");
+            bool firstKill = !DownedBossSystem.downedVolodar;
             NPC.SetEventFlagCleared(ref DownedBossSystem.downedVolodar, -1);
+            if (firstKill)
+            {
+                ElvenOreSpawner.Spawn();
+            }
         }
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)
