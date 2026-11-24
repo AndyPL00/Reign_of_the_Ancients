@@ -21,7 +21,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
         private const float EndScale = 1.2f;
         private const float HitLineWidth = 24f;
 
-        private static readonly Color SlashColor = new Color(120, 255, 200);
+        private static readonly Color SlashColor = new Color(150, 215, 255);
 
         public override void SetStaticDefaults()
         {
@@ -58,7 +58,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
             {
                 Vector2 edge = (Projectile.rotation + MathHelper.PiOver2).ToRotationVector2()
                     * Main.rand.NextFloat(-30f, 30f) * Projectile.scale;
-                Dust d = Dust.NewDustPerfect(Projectile.Center + edge, DustID.GemEmerald,
+                Dust d = Dust.NewDustPerfect(Projectile.Center + edge, DustID.IceTorch,
                     Projectile.velocity * 0.3f, 100, default, 1.1f);
                 d.noGravity = true;
             }
@@ -79,7 +79,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
         {
             for (int i = 0; i < 8; i++)
             {
-                Dust d = Dust.NewDustPerfect(target.Center, DustID.GemEmerald, Main.rand.NextVector2Circular(4f, 4f), 100, default, 1.2f);
+                Dust d = Dust.NewDustPerfect(target.Center, DustID.IceTorch, Main.rand.NextVector2Circular(4f, 4f), 100, default, 1.2f);
                 d.noGravity = true;
             }
         }
@@ -88,7 +88,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
         {
             for (int i = 0; i < 10; i++)
             {
-                Dust d = Dust.NewDustPerfect(Projectile.Center, DustID.GemEmerald, Main.rand.NextVector2Circular(3f, 3f), 100, default, 1f);
+                Dust d = Dust.NewDustPerfect(Projectile.Center, DustID.IceTorch, Main.rand.NextVector2Circular(3f, 3f), 100, default, 1f);
                 d.noGravity = true;
             }
             SoundEngine.PlaySound(SoundID.Item10 with { Volume = 0.5f, Pitch = 0.2f }, Projectile.Center);

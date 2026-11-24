@@ -39,7 +39,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
         private const float SwingShake = 3f;
         private const float HitShake = 5f;
 
-        private static readonly Color TrailColor = new Color(120, 255, 200);
+        private static readonly Color TrailColor = new Color(150, 215, 255);
 
         // Set by the item on the owner's client only, for magic swings.
         public int SlashDamage;
@@ -139,7 +139,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
                 Lighting.AddLight(tip, TrailColor.ToVector3() * (IsMagicSwing ? 0.6f : 0.3f));
                 if (Main.rand.NextBool(IsMagicSwing ? 1 : 3))
                 {
-                    Dust d = Dust.NewDustPerfect(tip, DustID.GemEmerald, Vector2.Zero, 100, default, 1.1f);
+                    Dust d = Dust.NewDustPerfect(tip, DustID.IceTorch, Vector2.Zero, 100, default, 1.1f);
                     d.noGravity = true;
                 }
             }
@@ -244,7 +244,7 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
             for (int i = 0; i < 12; i++)
             {
                 Vector2 speed = Main.rand.NextVector2Circular(5f, 5f);
-                Dust d = Dust.NewDustPerfect(target.Center, DustID.GemEmerald, speed, 100, default, 1.3f);
+                Dust d = Dust.NewDustPerfect(target.Center, DustID.IceTorch, speed, 100, default, 1.3f);
                 d.noGravity = true;
             }
         }
