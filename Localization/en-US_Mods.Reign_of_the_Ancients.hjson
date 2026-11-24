@@ -36,7 +36,6 @@ Projectiles: {
 
 # Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
 ElvenOreSpawned: "[Placeholder] Your world has been blessed with Elven Ore!"
-
 Tiles.ElvenOreTile.MapEntry: Elven Ore
 
 Buffs: {
@@ -48,6 +47,11 @@ Buffs: {
 	SpellweaveHasteBuff: {
 		DisplayName: Spellweave Haste
 		Description: "{0}% increased melee speed"
+	}
+
+	GuardiansCrestReadyBuff: {
+		DisplayName: Guardian's Crest
+		Description: The next hit you take deals {0}% less damage
 	}
 }
 
@@ -195,6 +199,50 @@ Items: {
 			'''
 			{0}% increased ranged damage
 			{1}% increased movement speed
+			'''
+	}
+
+	# ---- Elven accessories (all names are placeholders) ----
+	ApprenticesSpellbook: {
+		DisplayName: Apprentice's Spellbook
+		Tooltip:
+			'''
+			Increases maximum mana by {0}
+			{1}% increased magic damage
+			'''
+	}
+
+	SquiresBracer: {
+		DisplayName: Squire's Bracer
+		Tooltip:
+			'''
+			{0}% increased melee speed
+			Increases defense by {1}
+			Melee hits on enemies targeting you deal {2}% more knockback
+			'''
+	}
+
+	GuardiansCrest: {
+		DisplayName: Guardian's Crest
+		Tooltip: After {0} seconds without being hit, the next hit deals {1}% less damage
+	}
+
+	ElvenQuiver: {
+		DisplayName: Elven Quiver
+		Tooltip:
+			'''
+			{0}% increased ranged damage
+			Every {1} ranged shots, a homing spectral arrow is also fired
+			Spectral arrows deal {2}% of the shot's damage
+			'''
+	}
+
+	ArchivistsLantern: {
+		DisplayName: Archivist's Lantern
+		Tooltip:
+			'''
+			Provides light
+			Treasure within {0} tiles sparkles
 			'''
 	}
 }
