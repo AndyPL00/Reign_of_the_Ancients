@@ -33,6 +33,11 @@ Projectiles: {
 	SpectralArcherAlly.DisplayName: Spectral Archer
 	ElvenSpectralArrow.DisplayName: Spectral Arrow
 	TinySealedTomePet.DisplayName: Tiny Sealed Tome
+	ElvenLightStreak.DisplayName: Light Streak
+	ElvenShortswordStab.DisplayName: Elven Shortsword
+	ElvenCrescent.DisplayName: Crescent of Light
+	ElvenSceptreBeam.DisplayName: Arcane Beam
+	ElvenWhipProjectile.DisplayName: Elven Whip
 }
 
 # Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
@@ -53,6 +58,11 @@ Buffs: {
 	TinySealedTomeBuff: {
 		DisplayName: Tiny Sealed Tome
 		Description: A small sealed tome is following you
+	}
+
+	ElvenWhipTag: {
+		DisplayName: Arcane Mark
+		Description: Marked by an elven whip
 	}
 
 	GuardiansCrestReadyBuff: {
@@ -255,6 +265,41 @@ Items: {
 			'''
 			Provides light
 			Treasure within {0} tiles sparkles
+			'''
+	}
+
+	# ---- Elven ore weapons (all names are placeholders) ----
+	ElvenShortsword: {
+		DisplayName: Elven Shortsword
+		Tooltip: Every {0} hits, also fires a piercing dash of light
+	}
+
+	ElvenBroadsword: {
+		DisplayName: Elven Broadsword
+		Tooltip: Swings release a short-range crescent of light that deals {0}% damage
+	}
+
+	ElvenBow: {
+		DisplayName: Elven Bow
+		Tooltip: Wooden arrows become piercing streaks of light
+	}
+
+	ElvenSceptre: {
+		DisplayName: Elven Sceptre
+		Tooltip:
+			'''
+			Takes aim, then unleashes an arcane beam
+			Hold to sustain the beam for up to {0} seconds, draining {1} mana per second
+			'''
+	}
+
+	ElvenWhip: {
+		DisplayName: Elven Whip
+		Tooltip:
+			'''
+			{$CommonItemTooltip.SummonTagDamage}
+			{$CommonItemTooltip.Whips}
+			Minion hits on marked enemies have a 1 in {1} chance to burst into arcane shards
 			'''
 	}
 

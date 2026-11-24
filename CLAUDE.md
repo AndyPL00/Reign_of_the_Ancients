@@ -77,11 +77,23 @@
 - **Elven Ranger set** (Anvil): Hood 6 def, +8% ranged dmg; Tunic 7 def, +8% ranged crit, 15% ammo save; Leggings 6 def, +6% ranged dmg, +10% move. 19 def total. Each piece: 4 Arcane Crystal + bars (10/20/15) + Essence (3/5/4).
   - Set bonus **Arcane Volley** (`Common/ElvenRangerPlayer`): every 6th ranged shot also fires 2 homing `ElvenSpectralArrow`s at 50% of the shot's damage.
 - Placeholder sprites generated with System.Drawing; the `_Body` sheets only fill the torso frame (arms left empty) until Andy draws them.
+- **Weapons** (`Items/Weapons/`, Anvil, bars + Essence; bow/sceptre also Crystal):
+  - Elven Shortsword 24 dmg, fast stabs; every 4th stab that hits fires a piercing light-dash (60%).
+  - Elven Broadsword 32 dmg, each swing releases a short crescent (50%, `ElvenCrescent`, reuses the magic slash art).
+  - Elven Bow 26 dmg, wooden arrows become `ElvenLightStreak` (fast, pierces 3).
+  - Elven Sceptre 26 dmg, 12 mana (`ElvenSceptreBeam`): 0.5s aim line -> BOOM (x1.5 burst hits) -> hold left click up to 1.5s (3 mana / 10 ticks) -> forced stop; click again to recast.
+  - Elven Whip 26 dmg: Arcane Mark tag (`Buffs/ElvenWhipTag`) +6 tag dmg, minion hits 1/4 burst into 3 summon `ArcaneShard`s (40%).
+
+### Polish
+- Banners for all 4 elves (`Tiles/Banners/ElvenBanner` ModBannerTile + `Items/Placeable/Banners/`), 50 kills.
+- Master pet: Tiny Sealed Tome (`Items/Pets`, `Projectiles/Pets`, buff), 1/4 in Master like vanilla; listed in Boss Checklist collectibles.
+- Library ambience (`Common/LibraryAmbiencePlayer`): pale motes + sapphire sparks in front of library walls. Music: vanilla Space as a placeholder (`MysticalLibraryBiome.Music`).
 
 ## Andy to test in-game
 - Archmage, Mystical Library layout, Volodar fight, his drops and collectibles.
 - Accessories + Library chests (new world or `/buildlibrary`), new sprites (Greatsword grip position in the swing).
 - Elven ore tier: ore spawn on first Volodar kill (also in multiplayer), mining/smelting, tools, both armor sets and their set bonuses.
+- Ore weapons (esp. sceptre beam feel and whip vs Spinal Tap/Firecracker), banners, Tome pet, Library ambience + music.
 
 ## Later
 - Mystical Library: custom sprites.

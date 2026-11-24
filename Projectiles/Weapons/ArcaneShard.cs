@@ -8,7 +8,7 @@ using Terraria.ModLoader;
 namespace Reign_of_the_Ancients.Projectiles.Weapons
 {
     // Small homing arcane shard, released by Volodar's Bow's arcane arrow and Volodar's Grimoire's orb.
-    // ai[1] = 1 makes it magic damage (Grimoire); otherwise ranged (Bow).
+    // ai[1] = 1 makes it magic damage (Grimoire), ai[1] = 2 summon damage (Elven Whip tag); otherwise ranged (Bow).
     public class ArcaneShard : ModProjectile
     {
         private const int Lifetime = 60;
@@ -46,6 +46,10 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
             if (Projectile.ai[1] == 1f)
             {
                 Projectile.DamageType = DamageClass.Magic;
+            }
+            else if (Projectile.ai[1] == 2f)
+            {
+                Projectile.DamageType = DamageClass.Summon;
             }
 
             Projectile.localAI[0]++;
