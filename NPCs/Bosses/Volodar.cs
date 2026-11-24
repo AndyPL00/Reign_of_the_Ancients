@@ -46,6 +46,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         // ---- Loot ----
         private const int TrophyChance = 10; // 1 in N
         private const int MaskChance = 7;    // 1 in N (normal mode; the bag uses the same)
+        private const int BothWeaponsChance = 10; // 1 in N: lucky drop of both the bow and the grimoire
         private static readonly Color ChatColor = new Color(175, 130, 255);
 
         // ---- Movement ----
@@ -758,13 +759,23 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
 
             // Normal mode: the bow or the grimoire, 50/50, and sometimes the mask (the bag handles Expert).
             var notExpert = new LeadingConditionRule(new Conditions.NotExpert());
-            notExpert.OnSuccess(ItemDropRule.OneFromOptions(1, ModContent.ItemType<VolodarsBow>(), ModContent.ItemType<VolodarsGrimoire>()));
+            notExpert.OnSuccess(WeaponDrop());
             notExpert.OnSuccess(ItemDropRule.Common(ModContent.ItemType<VolodarMask>(), MaskChance));
             npcLoot.Add(notExpert);
 
             // Every mode: trophy. Master Mode: relic.
             npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<VolodarTrophy>(), TrophyChance));
             npcLoot.Add(ItemDropRule.MasterModeCommonDrop(ModContent.ItemType<VolodarRelic>()));
+        }
+
+        // The bow or the grimoire; with luck (1 in BothWeaponsChance) both. Shared with the treasure bag.
+        public static IItemDropRule WeaponDrop()
+        {
+            int bow = ModContent.ItemType<VolodarsBow>();
+            int grimoire = ModContent.ItemType<VolodarsGrimoire>();
+            return ItemDropRule.SequentialRulesNotScalingWithLuck(1,
+                ItemDropRule.FewFromOptionsNotScalingWithLuck(2, BothWeaponsChance, bow, grimoire),
+                ItemDropRule.OneFromOptionsNotScalingWithLuck(1, bow, grimoire));
         }
 
         public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry)

@@ -51,7 +51,7 @@
 - P1: volleys, arrow rain, telegraphed piercing shot, homing arrows, rune arrows. P2 adds split arrows, explosive orbs, sweeping beam, spectral clones, elf guards from the entrance.
 - Summoned with the Sealed Tome (12 Elven Essence + Book + 3 Fallen Stars at a demon altar), only in the throne room; he rises from the throne. Players in the throne room are locked in during the fight (`VolodarArenaPlayer`). Elven Essence drops from all library elves (`ElvenEssenceDrops`).
 - Music: Boss 1, then Boss 3 in phase 2. Placeholder names and sprites.
-- Drops: Volodar's Bow (30 dmg, every 3rd shot a splitting arcane arrow), Volodar's Grimoire (34 dmg magic, exploding orb + shards), Spectral Sigil (Expert accessory: spectral archer when firing ranged), treasure bag. Normal mode drops bow or grimoire 50/50.
+- Drops: Volodar's Bow (30 dmg, every 3rd shot a splitting arcane arrow), Volodar's Grimoire (34 dmg magic, exploding orb + shards), Spectral Sigil (Expert accessory: spectral archer when firing ranged), treasure bag (also 80-100 Elven Ore, ~half an armor set). Bow or grimoire 50/50, with a 1/10 chance of both (`Volodar.WeaponDrop`, shared by Normal mode and the bag).
 - Collectibles: trophy (1/10), mask (1/7 normal + bag), Master relic, Boss Checklist entry (`Common/ModIntegrations.cs`, progression 3.5), bestiary (Volodar + library biome on elves). Chat lines + bestiary text are placeholders in the hjson for Andy to write.
 
 ### Weapons

@@ -1,5 +1,5 @@
 using Reign_of_the_Ancients.Items.Accessories;
-using Reign_of_the_Ancients.Items.Weapons;
+using Reign_of_the_Ancients.Items.Materials;
 using Reign_of_the_Ancients.NPCs.Bosses;
 using Terraria;
 using Terraria.GameContent.ItemDropRules;
@@ -8,10 +8,12 @@ using Terraria.ModLoader;
 
 namespace Reign_of_the_Ancients.Items.Bosses
 {
-    // Volodar's Expert/Master treasure bag: the bow or the grimoire, the Spectral Sigil, and coins.
+    // Volodar's Expert/Master treasure bag: the bow or the grimoire (rarely both), Elven Ore, the Spectral Sigil, and coins.
     public class VolodarBag : ModItem
     {
         private const int MaskChance = 7; // 1 in N
+        private const int OreMin = 80;    // roughly half an armor set (a full set is 45 bars = 180 ore)
+        private const int OreMax = 100;
 
         public override void SetStaticDefaults()
         {
@@ -34,7 +36,8 @@ namespace Reign_of_the_Ancients.Items.Bosses
 
         public override void ModifyItemLoot(ItemLoot itemLoot)
         {
-            itemLoot.Add(ItemDropRule.OneFromOptions(1, ModContent.ItemType<VolodarsBow>(), ModContent.ItemType<VolodarsGrimoire>()));
+            itemLoot.Add(Volodar.WeaponDrop());
+            itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<ElvenOre>(), 1, OreMin, OreMax));
             itemLoot.Add(ItemDropRule.Common(ModContent.ItemType<SpectralSigil>()));
             itemLoot.Add(ItemDropRule.NotScalingWithLuck(ModContent.ItemType<Vanity.VolodarMask>(), MaskChance));
             itemLoot.Add(ItemDropRule.CoinsBasedOnNPCValue(ModContent.NPCType<Volodar>()));
