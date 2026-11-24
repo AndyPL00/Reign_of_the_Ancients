@@ -40,7 +40,7 @@
 - Apprentice and Archmage collide with blocks and only attack with line of sight; their projectiles and the beam stop at walls.
 
 ### Mystical Library (written, needs in-game testing)
-- World gen in `WorldGeneration/`, debug command `/buildlibrary`. Floors detected by wall type (`MysticalLibrary.FloorOfWall`). Blocks need 130 pick power, walls unbreakable until Hardmode. Vanilla textures as placeholders except the carpet. Furniture placed by vanilla ItemID so styles are always right. No loot yet.
+- World gen in `WorldGeneration/`, debug command `/buildlibrary`. Floors detected by wall type (`MysticalLibrary.FloorOfWall`). Blocks need 130 pick power, walls unbreakable until Hardmode. Vanilla textures as placeholders except the carpet. Furniture placed by vanilla ItemID so styles are always right. Loot chests: 2 Marble Chests in floor-1 reading nooks, 2 Obsidian Chests in floor-2 alcoves (never the vault), placed last where there is free floor (`LootChests`), filled by `WorldGeneration/LibraryLoot` (only in newly generated libraries).
 - Floor 1: white/gold cathedral with red carpet, arches, stained glass + rose window, bell towers (Apprentice, Squire).
 - Floor 2 (grand staircase): forbidden archive, obsidian/purple, sealed glowing vault (Archmage, High-Guard).
 - Floor 3: Volodar throne room, midnight granite + silver, pillars with small balconies, blue banners, stepped dais + throne (no spawns).
@@ -55,7 +55,16 @@
 - Collectibles: trophy (1/10), mask (1/7 normal + bag), Master relic, Boss Checklist entry (`Common/ModIntegrations.cs`, progression 3.5), bestiary (Volodar + library biome on elves). Chat lines + bestiary text are placeholders in the hjson for Andy to write.
 
 ### Weapons
-- Done: Elven Greatsword (held heavy swing + right-click magic slash). Sprites are placeholders.
+- Done: Elven Greatsword (held heavy swing + right-click magic slash). Sword + magic slash sprites from SpriteCook; effects are pale blue/ice.
+
+### Accessories (written, needs in-game testing; names placeholder, sprites placeholder)
+- Enemy drops (`Common/ElvenAccessoryDrops`): Apprentice's Spellbook (Apprentice 1/25: +20 mana, +4% magic dmg), Squire's Bracer (Squire 1/25: +6% melee speed, +1 def, +50% melee knockback on enemies targeting you), Guardian's Crest (High-Guard 1/20: after 6s unhit, next hit -30%, buff icon while ready).
+- Library chest loot (`LibraryLoot`): each chest has a 33% chance of its floor's signature item (floor 1 Archivist's Lantern: light + treasure within 10 tiles sparkles; floor 2 Elven Quiver: +10% ranged dmg, every 3rd ranged shot a homing spectral arrow at 45%, own counter, stacks with Arcane Volley), 15% for one of the three elf-drop accessories, plus Elven Essence 3-6, 2-3 potions, bombs, arrows, gold.
+- Logic in `Common/ElvenAccessoryPlayer` (Bracer, Crest, Lantern) and `Common/ElvenRangerPlayer` (Quiver).
+
+### Art (SpriteCook)
+- Style: see memory "elf-art-direction". Done: Volodar (menacing redesign), Elf High-Guard, Elven Greatsword, magic slash. NPC sheets are one pose x4 frames with a 1px breathing dip; real animations later (Andy may subscribe).
+- Still placeholder: Archmage, Squire, Apprentice, Volodar head icon/mask/trophy/relic, Volodar's weapons + sigil/tome/bag, ore tier, armor, accessories, buffs. High-Guard should be redone in the darker Volodar style.
 
 ### Elven ore tier (written, needs in-game testing; all names and sprites are placeholders)
 - Balance target: Molten-tier alternative (Molten is reachable before Skeletron). Spellblade = Molten for melee/magic, Ranger = the ranged pick right before WoF (between Necro and Molten).
@@ -71,10 +80,10 @@
 
 ## Andy to test in-game
 - Archmage, Mystical Library layout, Volodar fight, his drops and collectibles.
+- Accessories + Library chests (new world or `/buildlibrary`), new sprites (Greatsword grip position in the swing).
 - Elven ore tier: ore spawn on first Volodar kill (also in multiplayer), mining/smelting, tools, both armor sets and their set bonuses.
 
 ## Later
-- Mystical Library: custom sprites, loot chests.
-- Replace Elven Greatsword placeholder sprites.
+- Mystical Library: custom sprites.
 - Elven ore tier: real names, sprites (ore tile, items, armor sheets), maybe placeable bars and ore-tier weapons.
 - Reign of the Dwarves: interview Andy for lore, biome, enemies, Dwarven Titan, loot before planning.

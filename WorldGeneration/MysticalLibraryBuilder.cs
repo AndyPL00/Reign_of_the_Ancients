@@ -83,6 +83,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
         public const int ArchiveLadderEvery = 3;    // every Nth bay has a gap with ladder platforms
         public const float ArchiveBookcaseChance = 0.75f; // missing shelves: abandoned feel
         public const float CobwebChance = 0.35f;
+        public const int ChestsPerFloor = 2;        // loot chests on floor 1 and on floor 2 (see LibraryLoot)
         public const int ChainMinLength = 2;
         public const int ChainMaxLength = 7;
 
@@ -276,6 +277,71 @@ namespace Reign_of_the_Ancients.WorldGeneration
             foreach (var (x, y, item) in torches)
             {
                 PlaceSingle(x, y, item);
+            }
+
+            LootChests(l, hallBays, archiveBays);
+        }
+
+        // ================= Loot chests =================
+
+        // A few chests in the reading nooks (floor 1) and archive alcoves (floor 2), after all other furniture,
+        // so they only go where there is free floor. Contents come from LibraryLoot.
+        private static void LootChests(LibraryLayout l, List<(int a, int c, int center)> hallBays, List<(int a, int c, int center)> archiveBays)
+        {
+            var nooks = new List<(int, int, int)>();
+            for (int b = 0; b < hallBays.Count; b++)
+            {
+                if (b != hallBays.Count / 2 && !IsGalleryBay(b, hallBays.Count))
+                {
+                    nooks.Add(hallBays[b]);
+                }
+            }
+            var alcoves = new List<(int, int, int)>(archiveBays);
+            alcoves.RemoveAt(archiveBays.Count / 2); // never inside the sealed vault
+
+            PlaceLootChests(l, nooks, l.GroundY, ItemID.MarbleChest, 1);
+            PlaceLootChests(l, alcoves, l.Archive.Bottom, ItemID.ObsidianChest, 2);
+        }
+
+        private static void PlaceLootChests(LibraryLayout l, List<(int a, int c, int center)> bays, int floorY, int chestItem, int floor)
+        {
+            Item chest = ContentSamples.ItemsByType[chestItem];
+            int placed = 0;
+            Shuffle(bays);
+            foreach (var (a, c, _) in bays)
+            {
+                if (placed >= ChestsPerFloor)
+                {
+                    break;
+                }
+
+                // Try the bay's floor from a random starting column; PlaceChest checks for room and solid ground.
+                int width = c - a - 2;
+                int offset = WorldGen.genRand.Next(Math.Max(width, 1));
+                for (int i = 0; i < width; i++)
+                {
+                    int x = a + 1 + (offset + i) % width;
+                    if (NearStairMouth(l, x) || NearStairMouth(l, x + 1))
+                    {
+                        continue;
+                    }
+                    int index = WorldGen.PlaceChest(x, floorY - 1, (ushort)chest.createTile, false, chest.placeStyle);
+                    if (index >= 0)
+                    {
+                        LibraryLoot.Fill(Main.chest[index], floor);
+                        placed++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static void Shuffle<T>(List<T> list)
+        {
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int j = WorldGen.genRand.Next(i + 1);
+                (list[i], list[j]) = (list[j], list[i]);
             }
         }
 
