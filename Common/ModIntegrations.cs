@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Reign_of_the_Ancients.Items.Bosses;
+using Reign_of_the_Ancients.Items.Pets;
 using Reign_of_the_Ancients.Items.Placeable;
 using Reign_of_the_Ancients.Items.Vanity;
 using Reign_of_the_Ancients.NPCs.Bosses;
@@ -36,6 +37,7 @@ namespace Reign_of_the_Ancients.Common
                         ModContent.ItemType<VolodarRelic>(),
                         ModContent.ItemType<VolodarTrophy>(),
                         ModContent.ItemType<VolodarMask>(),
+                        ModContent.ItemType<TinySealedTome>(),
                     },
                     ["spawnInfo"] = Language.GetText("Mods.Reign_of_the_Ancients.BossChecklist.Volodar.SpawnInfo"),
                 });

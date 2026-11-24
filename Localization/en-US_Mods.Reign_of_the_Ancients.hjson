@@ -32,6 +32,7 @@ Projectiles: {
 	ArcaneOrb.DisplayName: Arcane Orb
 	SpectralArcherAlly.DisplayName: Spectral Archer
 	ElvenSpectralArrow.DisplayName: Spectral Arrow
+	TinySealedTomePet.DisplayName: Tiny Sealed Tome
 }
 
 # Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
@@ -47,6 +48,11 @@ Buffs: {
 	SpellweaveHasteBuff: {
 		DisplayName: Spellweave Haste
 		Description: "{0}% increased melee speed"
+	}
+
+	TinySealedTomeBuff: {
+		DisplayName: Tiny Sealed Tome
+		Description: A small sealed tome is following you
 	}
 
 	GuardiansCrestReadyBuff: {
@@ -107,6 +113,12 @@ Items: {
 	VolodarMask: {
 		DisplayName: Volodar Mask
 		Tooltip: ""
+	}
+
+	# Master Mode pet (placeholder name)
+	TinySealedTome: {
+		DisplayName: Tiny Sealed Tome
+		Tooltip: Summons a small sealed tome to follow you
 	}
 
 	VolodarBag: {

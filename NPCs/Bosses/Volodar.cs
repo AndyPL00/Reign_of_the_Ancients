@@ -6,6 +6,7 @@ using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.Common;
 using Reign_of_the_Ancients.Items.Bosses;
 using Reign_of_the_Ancients.Items.Placeable;
+using Reign_of_the_Ancients.Items.Pets;
 using Reign_of_the_Ancients.Items.Vanity;
 using Reign_of_the_Ancients.Items.Weapons;
 using Terraria.Chat;
@@ -46,6 +47,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         // ---- Loot ----
         private const int TrophyChance = 10; // 1 in N
         private const int MaskChance = 7;    // 1 in N (normal mode; the bag uses the same)
+        private const int PetChance = 4;     // 1 in N, Master Mode only (vanilla Master pets are 1/4)
         private const int BothWeaponsChance = 10; // 1 in N: lucky drop of both the bow and the grimoire
         private static readonly Color ChatColor = new Color(175, 130, 255);
 
@@ -766,6 +768,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             // Every mode: trophy. Master Mode: relic.
             npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<VolodarTrophy>(), TrophyChance));
             npcLoot.Add(ItemDropRule.MasterModeCommonDrop(ModContent.ItemType<VolodarRelic>()));
+            npcLoot.Add(ItemDropRule.MasterModeDropOnAllPlayers(ModContent.ItemType<TinySealedTome>(), PetChance));
         }
 
         // The bow or the grimoire; with luck (1 in BothWeaponsChance) both. Shared with the treasure bag.
