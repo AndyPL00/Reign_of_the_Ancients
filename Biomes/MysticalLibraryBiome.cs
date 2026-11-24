@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Reign_of_the_Ancients.Walls.Library;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Reign_of_the_Ancients.Biomes
@@ -11,6 +12,10 @@ namespace Reign_of_the_Ancients.Biomes
         public override SceneEffectPriority Priority => SceneEffectPriority.BiomeHigh;
 
         public override string BestiaryIcon => "Reign_of_the_Ancients/icon_small"; // placeholder
+
+        // Placeholder vanilla track. To use a custom one, drop an .ogg in Assets/Music/ and return
+        // MusicLoader.GetMusicSlot(Mod, "Assets/Music/<FileName>") instead.
+        public override int Music => MusicID.Space;
 
         public override bool IsBiomeActive(Player player)
         {
