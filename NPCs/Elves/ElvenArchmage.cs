@@ -9,6 +9,7 @@ using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Common;
 using Reign_of_the_Ancients.Items.Materials;
 using Reign_of_the_Ancients.Projectiles.Elves;
@@ -105,6 +106,8 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             NPC.knockBackResist = 0.4f;
             NPC.aiStyle = -1;
             SpawnModBiomes = new int[] { ModContent.GetInstance<MysticalLibraryBiome>().Type }; // bestiary biome
+            Banner = Type;
+            BannerItem = ModContent.ItemType<ElvenArchmageBanner>();
             NPC.noGravity = true;
             NPC.noTileCollide = false; // flies, but can't pass through blocks
         }

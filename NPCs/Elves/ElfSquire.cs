@@ -3,6 +3,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Common;
 
 namespace Reign_of_the_Ancients.NPCs.Elves
@@ -31,6 +32,8 @@ namespace Reign_of_the_Ancients.NPCs.Elves
             NPC.knockBackResist = 0.6f;
             NPC.aiStyle = -1;
             SpawnModBiomes = new int[] { ModContent.GetInstance<MysticalLibraryBiome>().Type }; // bestiary biome
+            Banner = Type;
+            BannerItem = ModContent.ItemType<ElfSquireBanner>();
             NPC.noGravity = false;
             NPC.noTileCollide = false;
             NPC.stepSpeed = 1f;

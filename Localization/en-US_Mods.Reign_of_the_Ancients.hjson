@@ -245,6 +245,27 @@ Items: {
 			Treasure within {0} tiles sparkles
 			'''
 	}
+
+	# ---- Enemy banners ----
+	ElvenApprenticeBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.ElvenApprentice.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.ElvenApprentice.DisplayName}"
+	}
+
+	ElfSquireBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.ElfSquire.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.ElfSquire.DisplayName}"
+	}
+
+	ElfHighGuardBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.ElfHighGuard.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.ElfHighGuard.DisplayName}"
+	}
+
+	ElvenArchmageBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.ElvenArchmage.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.ElvenArchmage.DisplayName}"
+	}
 }
 
 DamageClasses.MeleeMagicDamageClass.DisplayName: melee/magic damage
