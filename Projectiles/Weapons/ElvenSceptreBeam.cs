@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Reign_of_the_Ancients.Common.Visuals;
 using Reign_of_the_Ancients.Items.Weapons;
 using Terraria;
 using Terraria.Audio;
@@ -31,6 +32,8 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
         private const float TipOffset = 30f;       // beam starts at the sceptre tip, not the player's chest
         private const float HoldTurnSpeed = 0.08f; // how fast the beam follows the cursor while firing
         private const int AimSyncInterval = 6;
+        private const float TelegraphWidth = 2f;
+        private const float ExtendTicks = 3f;      // the beam shoots out to full length over this many ticks
 
         private static readonly Color CoreColor = new Color(150, 215, 255);
         private static readonly Color OuterColor = new Color(70, 120, 255);
@@ -103,6 +106,9 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
                 {
                     Lighting.AddLight(Projectile.Center + dir * d, CoreColor.ToVector3() * 0.6f);
                 }
+                Vector2 impact = Projectile.Center + dir * Projectile.localAI[1];
+                Dust spark = Dust.NewDustPerfect(impact, DustID.IceTorch, (-dir).RotatedByRandom(1.1f) * Main.rand.NextFloat(2f, 5f), 100, default, 1.2f);
+                spark.noGravity = true;
                 if (Main.rand.NextBool(2))
                 {
                     Vector2 along = Projectile.Center + dir * Main.rand.NextFloat(Projectile.localAI[1]);
@@ -200,26 +206,22 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
             float length = Projectile.localAI[1];
             if (Age < TelegraphTicks)
             {
-                float progress = Age / (float)TelegraphTicks;
-                DrawLine(length, 1.5f + 2.5f * progress, (CoreColor * (0.25f + 0.55f * progress)) with { A = 0 });
+                BeamRenderer.DrawTelegraph(Projectile.Center, Projectile.rotation, length, TelegraphWidth, CoreColor, Age / (float)TelegraphTicks);
                 return false;
             }
 
-            float fade = Fading ? 1f - (Age - FadeStart) / FadeTicks : 1f;
-            // Extra-wide flash right after the BOOM, then a gentle pulse while held.
-            float flash = MathHelper.Clamp(1f - ActiveAge / 8f, 0f, 1f);
-            float pulse = 1f + 0.08f * (float)System.Math.Sin(Age * 0.5f);
-            float width = Width * pulse * (1f + flash * 0.8f);
-            DrawLine(length, width * 1.8f, (OuterColor * 0.45f * fade) with { A = 0 });
-            DrawLine(length, width, (CoreColor * 0.85f * fade) with { A = 0 });
-            DrawLine(length, width * 0.35f, (Color.White * fade) with { A = 0 });
+            // The beam shoots out to full length over a few ticks, overshoots its width (BOOM), settles, then collapses when it stops.
+            float reach = MathHelper.Clamp((ActiveAge + 1f) / ExtendTicks, 0f, 1f);
+            float widthMult = BeamRenderer.FireEnvelope(ActiveAge);
+            float opacity = 1f;
+            if (Fading)
+            {
+                float t = (Age - FadeStart) / FadeTicks;
+                widthMult *= BeamRenderer.CloseEnvelope(t);
+                opacity = 1f - t * 0.5f;
+            }
+            BeamRenderer.DrawBeam(Projectile.Center, Projectile.rotation, length * reach, Width * widthMult, OuterColor, CoreColor, opacity);
             return false;
-        }
-
-        private void DrawLine(float length, float thickness, Color color)
-        {
-            Main.EntitySpriteDraw(TextureAssets.MagicPixel.Value, Projectile.Center - Main.screenPosition, new Rectangle(0, 0, 1, 1),
-                color, Projectile.rotation, new Vector2(0f, 0.5f), new Vector2(length, thickness), SpriteEffects.None);
         }
     }
 }

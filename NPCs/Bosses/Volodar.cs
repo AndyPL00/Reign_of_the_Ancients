@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.Common;
+using Reign_of_the_Ancients.Common.Visuals;
 using Reign_of_the_Ancients.Items.Bosses;
 using Reign_of_the_Ancients.Items.Placeable;
 using Reign_of_the_Ancients.Items.Pets;
@@ -43,6 +44,8 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         private const float Phase2LifeRatio = 0.5f;
         private const int Phase1Music = MusicID.Boss1;
         private const int Phase2Music = MusicID.Boss3;
+
+        private const float ChargedLineLength = 1400f; // aiming line for the charged shot
 
         // ---- Loot ----
         private const int TrophyChance = 10; // 1 in N
@@ -832,9 +835,8 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             {
                 bool locked = Tick >= ChargedTrackTicks;
                 float progress = Tick / (float)(ChargedTrackTicks + ChargedLockTicks);
-                Color line = (locked ? new Color(220, 250, 255) : new Color(150, 200, 255)) * (0.25f + 0.6f * progress);
-                spriteBatch.Draw(TextureAssets.MagicPixel.Value, NPC.Center - screenPos, new Rectangle(0, 0, 1, 1), line with { A = 0 },
-                    Aux, new Vector2(0f, 0.5f), new Vector2(1400f, locked ? 4f : 2f), SpriteEffects.None, 0f);
+                Color line = locked ? new Color(220, 250, 255) : new Color(150, 200, 255);
+                BeamRenderer.DrawTelegraph(NPC.Center, Aux, ChargedLineLength, locked ? 2.5f : 1.5f, line, progress);
             }
 
             // Afterimages while moving fast, always in phase 2.

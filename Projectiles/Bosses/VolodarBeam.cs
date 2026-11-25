@@ -1,8 +1,7 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+using Reign_of_the_Ancients.Common.Visuals;
 using Terraria;
 using Terraria.Audio;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -20,6 +19,11 @@ namespace Reign_of_the_Ancients.Projectiles.Bosses
 
         private const float MaxLength = 1600f;
         private const float Width = 24f;
+        private const float TelegraphWidth = 2.5f;
+        private const float ExtendTicks = 4f;      // the beam shoots out to full length over this many ticks
+
+        private static readonly Color CoreColor = new Color(205, 140, 255);
+        private static readonly Color OuterColor = new Color(130, 60, 255);
 
         // Uses the arrow sprite only as a placeholder; the beam is drawn with plain rectangles.
         public override string Texture => "Reign_of_the_Ancients/Projectiles/Bosses/VolodarArrow";
@@ -61,6 +65,9 @@ namespace Reign_of_the_Ancients.Projectiles.Bosses
             if (Sweeping)
             {
                 Vector2 dir = Projectile.rotation.ToRotationVector2();
+                Vector2 impact = Projectile.Center + dir * Projectile.localAI[1];
+                Dust spark = Dust.NewDustPerfect(impact, DustID.PurpleTorch, (-dir).RotatedByRandom(1.1f) * Main.rand.NextFloat(2f, 6f), 100, default, 1.4f);
+                spark.noGravity = true;
                 for (float d = 0f; d < Projectile.localAI[1]; d += 64f)
                 {
                     Lighting.AddLight(Projectile.Center + dir * d, 0.5f, 0.3f, 0.9f);
@@ -99,23 +106,22 @@ namespace Reign_of_the_Ancients.Projectiles.Bosses
             float length = Projectile.localAI[1];
             if (Age < TelegraphTicks)
             {
-                float progress = Age / (float)TelegraphTicks;
-                DrawLine(length, 2f + 2f * progress, new Color(200, 140, 255, 0) * (0.3f + 0.5f * progress));
+                BeamRenderer.DrawTelegraph(Projectile.Center, Projectile.rotation, length, TelegraphWidth, CoreColor, Age / (float)TelegraphTicks);
+                return false;
             }
-            else
-            {
-                float fade = Sweeping ? 1f : 1f - (Age - TelegraphTicks - SweepTicks) / (float)FadeTicks;
-                DrawLine(length, Width * 1.7f, new Color(140, 70, 255, 0) * 0.45f * fade);
-                DrawLine(length, Width, new Color(200, 130, 255, 0) * 0.85f * fade);
-                DrawLine(length, Width * 0.35f, new Color(255, 255, 255, 0) * fade);
-            }
-            return false;
-        }
 
-        private void DrawLine(float length, float thickness, Color color)
-        {
-            Main.EntitySpriteDraw(TextureAssets.MagicPixel.Value, Projectile.Center - Main.screenPosition, new Rectangle(0, 0, 1, 1),
-                color, Projectile.rotation, new Vector2(0f, 0.5f), new Vector2(length, thickness), SpriteEffects.None);
+            float fired = Age - TelegraphTicks;
+            float reach = MathHelper.Clamp((fired + 1f) / ExtendTicks, 0f, 1f);
+            float widthMult = BeamRenderer.FireEnvelope(fired);
+            float opacity = 1f;
+            if (!Sweeping)
+            {
+                float t = (fired - SweepTicks) / (float)FadeTicks;
+                widthMult *= BeamRenderer.CloseEnvelope(t);
+                opacity = 1f - t * 0.5f;
+            }
+            BeamRenderer.DrawBeam(Projectile.Center, Projectile.rotation, length * reach, Width * widthMult, OuterColor, CoreColor, opacity);
+            return false;
         }
     }
 }

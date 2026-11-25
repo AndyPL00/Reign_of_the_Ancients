@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+using Reign_of_the_Ancients.Common.Visuals;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -80,21 +79,17 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
 
         public override bool PreDraw(ref Color lightColor)
         {
-            // Fade in the tail over the first few updates so it doesn't appear behind the bow.
-            float age = Projectile.localAI[0];
-            float length = StreakLength * MathHelper.Clamp(age / 6f, 0.2f, 1f);
-            Vector2 tail = Projectile.Center - Main.screenPosition;
+            // A comet: round glowing head with a soft tail that tapers away behind it.
+            // The tail grows over the first few updates so it doesn't appear behind the bow.
+            float length = StreakLength * MathHelper.Clamp(Projectile.localAI[0] / 6f, 0.2f, 1f);
+            Vector2 head = Projectile.Center - Main.screenPosition;
             float back = Projectile.rotation + MathHelper.Pi;
-            DrawPixel(tail, back, length, StreakWidth * 2.2f, (StreakColor * 0.35f) with { A = 0 });
-            DrawPixel(tail, back, length, StreakWidth, (StreakColor * 0.9f) with { A = 0 });
-            DrawPixel(tail, back, length * 0.6f, StreakWidth * 0.4f, Color.White with { A = 0 });
+            BeamRenderer.Capsule(head, back, length, StreakWidth * 2.6f, StreakColor * 0.35f);
+            BeamRenderer.Capsule(head, back, length * 0.75f, StreakWidth * 1.4f, StreakColor * 0.9f);
+            BeamRenderer.Capsule(head, back, length * 0.45f, StreakWidth * 0.6f, Color.White);
+            BeamRenderer.Glow(head, StreakWidth * 5f, StreakColor * 0.6f);
+            BeamRenderer.Glow(head, StreakWidth * 2.2f, Color.White);
             return false;
-        }
-
-        private static void DrawPixel(Vector2 start, float rotation, float length, float thickness, Color color)
-        {
-            Main.EntitySpriteDraw(TextureAssets.MagicPixel.Value, start, new Rectangle(0, 0, 1, 1), color, rotation,
-                new Vector2(0f, 0.5f), new Vector2(length, thickness), SpriteEffects.None);
         }
     }
 }

@@ -11,6 +11,7 @@ using Terraria.ModLoader;
 using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Common;
+using Reign_of_the_Ancients.Common.Visuals;
 using Reign_of_the_Ancients.Items.Materials;
 using Reign_of_the_Ancients.Projectiles.Elves;
 
@@ -50,6 +51,11 @@ namespace Reign_of_the_Ancients.NPCs.Elves
         // Beam attack
         private const float BeamLength = 900f;
         private const float BeamWidth = 18f;
+        private const float BeamTelegraphWidth = 2f;
+        private const float BeamOpenTicks = 3f;    // flash beam widens over this many ticks, then collapses
+        private const float BeamExtendTicks = 2f;  // and shoots out to full length over this many
+        private static readonly Color BeamCoreColor = new Color(205, 130, 255);
+        private static readonly Color BeamOuterColor = new Color(140, 60, 255);
         private const int BeamDamage = 34;
 
         // Teleport
@@ -516,39 +522,23 @@ namespace Reign_of_the_Ancients.NPCs.Elves
         {
             if (State == StateBeamTelegraph)
             {
-                // Thin, flickering line that grows brighter as the beam gets closer to firing
+                // Aiming line that thickens, brightens and flickers faster as the beam gets closer to firing.
                 float progress = Timer / BeamTelegraphTicks;
-                float flicker = 0.6f + 0.4f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 30f);
-                Color color = new Color(200, 120, 255) * (0.25f + 0.55f * progress) * flicker;
-                DrawBeamLine(spriteBatch, screenPos, 2f + 2f * progress, color);
+                float flicker = 0.75f + 0.25f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * (20f + 30f * progress));
+                BeamRenderer.DrawTelegraph(NPC.Center, AimAngle, CurrentBeamLength(), BeamTelegraphWidth, BeamCoreColor, progress, flicker);
             }
             else if (State == StateBeamFire)
             {
-                // Thick glowing core that fades out over the flash duration
-                float fade = 1f - Timer / BeamFlashTicks;
-                DrawBeamLine(spriteBatch, screenPos, BeamWidth * 1.6f, new Color(150, 60, 255, 0) * 0.5f * fade);
-                DrawBeamLine(spriteBatch, screenPos, BeamWidth, new Color(200, 120, 255, 0) * 0.85f * fade);
-                DrawBeamLine(spriteBatch, screenPos, BeamWidth * 0.35f, new Color(255, 255, 255, 0) * fade);
+                // A short, violent flash: shoots out wide, then collapses to nothing over the flash.
+                float reach = MathHelper.Clamp((Timer + 1f) / BeamExtendTicks, 0f, 1f);
+                float widthMult = Timer < BeamOpenTicks
+                    ? BeamRenderer.FireEnvelope(Timer, BeamOpenTicks, 1f)
+                    : 1.8f * BeamRenderer.CloseEnvelope((Timer - BeamOpenTicks) / (BeamFlashTicks - BeamOpenTicks));
+                float opacity = 1f - 0.5f * MathHelper.Clamp((Timer - BeamOpenTicks) / (BeamFlashTicks - BeamOpenTicks), 0f, 1f);
+                BeamRenderer.DrawBeam(NPC.Center, AimAngle, CurrentBeamLength() * reach, BeamWidth * widthMult, BeamOuterColor, BeamCoreColor, opacity, flow: false);
             }
 
             return true; // draw the NPC sprite normally on top
-        }
-
-        private void DrawBeamLine(SpriteBatch spriteBatch, Vector2 screenPos, float thickness, Color color)
-        {
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-            spriteBatch.Draw(
-                pixel,
-                NPC.Center - screenPos,
-                new Rectangle(0, 0, 1, 1),
-                color,
-                AimAngle,
-                new Vector2(0f, 0.5f),
-                new Vector2(CurrentBeamLength(), thickness),
-                SpriteEffects.None,
-                0f
-            );
         }
 
         public override void FindFrame(int frameHeight)
