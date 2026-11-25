@@ -32,6 +32,7 @@ Bestiary: {
 }
 
 BossChecklist.Volodar.SpawnInfo: Use a [i:Reign_of_the_Ancients/SealedTome] Sealed Tome in the throne room of the Mystical Library.
+BossChecklist.DwarvenTitan.SpawnInfo: After Skeletron is defeated, pull the lever of the control machine in the foundry at the far end of the Dwarven Hold's mines.
 
 Projectiles: {
 	ElvenFireball.DisplayName: Elven Fireball

@@ -9,10 +9,12 @@ namespace Reign_of_the_Ancients.Common
     public class DownedBossSystem : ModSystem
     {
         public static bool downedVolodar;
+        public static bool downedTitan;
 
         public override void ClearWorld()
         {
             downedVolodar = false;
+            downedTitan = false;
         }
 
         public override void SaveWorldData(TagCompound tag)
@@ -21,21 +23,28 @@ namespace Reign_of_the_Ancients.Common
             {
                 tag["downedVolodar"] = true;
             }
+            if (downedTitan)
+            {
+                tag["downedTitan"] = true;
+            }
         }
 
         public override void LoadWorldData(TagCompound tag)
         {
             downedVolodar = tag.ContainsKey("downedVolodar");
+            downedTitan = tag.ContainsKey("downedTitan");
         }
 
         public override void NetSend(BinaryWriter writer)
         {
             writer.Write(downedVolodar);
+            writer.Write(downedTitan);
         }
 
         public override void NetReceive(BinaryReader reader)
         {
             downedVolodar = reader.ReadBoolean();
+            downedTitan = reader.ReadBoolean();
         }
     }
 }

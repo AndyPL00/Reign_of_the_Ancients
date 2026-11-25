@@ -863,6 +863,11 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
 
         public override bool CheckActive() => false;
 
+        public override void OnKill()
+        {
+            NPC.SetEventFlagCleared(ref Common.DownedBossSystem.downedTitan, -1);
+        }
+
         public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry)
         {
             bestiaryEntry.Info.AddRange(new IBestiaryInfoElement[]

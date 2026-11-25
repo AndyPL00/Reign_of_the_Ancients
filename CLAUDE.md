@@ -26,7 +26,7 @@
 | Stage | Reign | Boss |
 |---|---|---|
 | Pre-Hardmode, after Evil boss | Elves | Volodar (written, testing) |
-| Pre-Hardmode, after Skeletron | Dwarves | Dwarven Titan |
+| Pre-Hardmode, after Skeletron | Dwarves | Dwarven Titan (written, testing) |
 | Pre-Hardmode | Skrougers | Boulder Drake |
 | Early/Mid Hardmode | Murks | Irwhyal |
 | Late Hardmode | Giants | Obdgar, the Mountainsplitter |
@@ -112,7 +112,14 @@
   - Corrupted Gunner (hall/forges): aims 0.5s (muzzle smoke), blunderbuss spread of 5 `DwarvenPellet`s, recoil.
   - Corrupted Miner (mines): digs through blocks toward you (never hold/library/dungeon/temple blocks, furniture or hard ores), pickaxe lunge.
   - Rusted Mech Pilot (forges/mines, rare mini-elite, 320 HP): 3-shot bursts at range; up close steam windup -> charge (45 dmg) -> stunned.
-- Not yet: drops/accessories, hold chests, Dwarven Titan, Titan weapons.
+- **Dwarven Titan (written, needs in-game testing; placeholder name/art):** `NPCs/Bosses/DwarvenTitan.cs` + `DwarvenTitanCannon.cs`, projectiles in `Projectiles/Bosses/Titan/`, plate gores in `Gores/`. 6500 HP, 160x120 hitbox on treads (ground-bound, never jumps), 8-frame sheet (4 tread frames plated, 4 with the core exposed). Decided with Andy:
+  - Woken by right-clicking `TitanControlMachine` (only after Skeletron, reusable; message `TitanMachineDormant` before that). Debug: `/spawntitan` (singleplayer, stand in the foundry, ignores Skeletron). Rolls out of steam at the far end; players in the foundry are locked in (`TitanArenaPlayer`); drives back and shuts down if everyone dies/leaves. Arena limits keep it off the entrance dais and out of the far lava channel (`GetArena`).
+  - **Arm cannons:** two separate optional targets (900 HP each, own health bars) on the shoulder pylons; they aim and fire during the barrage by reading the Titan's state/timer. Each one destroyed: +12% speed/attack rate (`Rage`).
+  - **Phase 1 (plated, takes 35% less damage):** arm cannon shell barrage (aim telegraph), ground slam shockwaves (jump over), tread ram (red floor telegraph; stunned if it hits the arena end), homing steam rockets.
+  - **Phase 2 at 60%:** klaxon transition, plates blast off (gores), core exposed: no reduction, core hits +50% (projectiles touching it, melee within reach). x1.25 speed, double slam, 3 rockets, plus steam vents (two alternating rows of columns) and a flamethrower sweep (high ahead down to the floor, telegraphed).
+  - Music placeholder Boss 2 -> Boss 3. Downed flag `DownedBossSystem.downedTitan`; Boss Checklist progression 5.5. Bestiary text placeholder.
+  - No loot yet (bag, trophy, mask, relic, pet, Titan weapons): discuss weapons with Andy first.
+- Not yet: grunt drops/accessories, hold chests, Titan loot and weapons.
 
 ## Andy to test in-game
 - Archmage, Mystical Library layout, Volodar fight, his drops and collectibles.
@@ -121,6 +128,7 @@
 - Ore weapons (esp. sceptre beam feel and whip vs Spinal Tap/Firecracker), banners, Tome pet, Library ambience + music.
 - Dwarven Hold (`/buildhold`, gate opening after Skeletron, new world gen placement) and the four dwarf grunts.
 - Hold steampunk decor: gears turning (speed/look), boiler light + moodiness, pipes connecting cleanly, platforms walkable, decor not breakable before Skeletron.
+- Dwarven Titan: whole fight (`/spawntitan`), arena lock, arm cannons as targets, phase 2 at 60%, balance at 6500 HP vs Molten/Elven gear.
 
 ## Later
 - Mystical Library: custom sprites.
