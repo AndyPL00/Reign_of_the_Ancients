@@ -89,6 +89,17 @@
 - Master pet: Tiny Sealed Tome (`Items/Pets`, `Projectiles/Pets`, buff), 1/4 in Master like vanilla; listed in Boss Checklist collectibles.
 - Library ambience (`Common/LibraryAmbiencePlayer`): pale motes + sapphire sparks in front of library walls. Music: vanilla Space as a placeholder (`MysticalLibraryBiome.Music`).
 
+## Design: Reign of the Dwarves (interviewed, not started; all names placeholders)
+- **Lore (Andy's words):** "Once the elves' allies, the two factions turned on each other, leading to both of their falls. All that remains are brainless, corrupted grunts and an ancient Dwarven Titan machinery."
+- **Theme:** fallen/cursed dwarves; engineering + forge & fire, steampunk attacks, ground slams with shockwaves, hot steam. Palette idea: brass/rust/orange vs the elves' silver/blue.
+- **Biome:** deep underground hold, lower caverns toward the Underworld, bigger and more sprawling than the Library (mine tunnels, rails). Exists from world gen; its great gate is sealed (unbreakable) until Skeletron is dead.
+- **Grunts:** Sapper (lobs bombs/kegs), Blunderbuss gunner (steampunk shotgun spread), Miner (tunnels through blocks toward you, pickaxe swings), Rusted mech pilot (old mech, shoots bursts at range, charges up close; rarer mini-elite).
+- **Dwarven Titan:** self-running ancient war machine, nobody inside (no dialogue: gears, steam, klaxons). Bulky, slow, heavy-hitting, moves on treads (ground-bound, never jumps).
+  - Breakable parts: arm cannons (destroying one removes its attacks) and armor plating (falls off, exposes a weak core).
+  - Attacks: cannon shells + ground-slam shockwaves, steam vents + flamethrower sweep, tread ram charge + homing steam rockets.
+  - Woken by a lever/machine in its chamber (re-usable, no summon item). Arena: foundry hangar with lava channels.
+- **Loot:** Titan weapons (to discuss later), grunt accessories, hold chests with signature items. No new ore tier for this Reign.
+
 ## Andy to test in-game
 - Archmage, Mystical Library layout, Volodar fight, his drops and collectibles.
 - Accessories + Library chests (new world or `/buildlibrary`), new sprites (Greatsword grip position in the swing).
@@ -98,4 +109,3 @@
 ## Later
 - Mystical Library: custom sprites.
 - Elven ore tier: real names, sprites (ore tile, items, armor sheets), maybe placeable bars and ore-tier weapons.
-- Reign of the Dwarves: interview Andy for lore, biome, enemies, Dwarven Titan, loot before planning.
