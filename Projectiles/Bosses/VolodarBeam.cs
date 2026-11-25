@@ -12,7 +12,7 @@ namespace Reign_of_the_Ancients.Projectiles.Bosses
     public class VolodarBeam : ModProjectile
     {
         public const int TelegraphTicks = 35;
-        public const int SweepTicks = 70;
+        public const int SweepTicks = 115;   // time to sweep the full arc (was 70; higher = slower)
         public const int FadeTicks = 10;
         public const int TotalTicks = TelegraphTicks + SweepTicks + FadeTicks;
         public static readonly float SweepArc = MathHelper.ToRadians(110f);

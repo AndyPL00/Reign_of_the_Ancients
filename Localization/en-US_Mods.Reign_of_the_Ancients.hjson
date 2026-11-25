@@ -290,6 +290,7 @@ Items: {
 			'''
 			Takes aim, then unleashes an arcane beam
 			Hold to sustain the beam for up to {0} seconds, draining {1} mana per second
+			{2} second cooldown after the beam ends
 			'''
 	}
 

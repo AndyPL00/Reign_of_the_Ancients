@@ -17,10 +17,15 @@ namespace Reign_of_the_Ancients.Items.Weapons
         public const int BarCost = 12;
         public const int EssenceCost = 3;
         public const int CrystalCost = 3;
+        public const int CooldownTicks = 90;   // after the beam ends, wait this long before the next cast
+
+        // Game tick until which this sceptre can't be used again (set by ElvenSceptreBeam when it ends).
+        public uint cooldownUntil;
 
         public override LocalizedText Tooltip => base.Tooltip.WithFormatArgs(
             ElvenSceptreBeam.MaxActiveTicks / 60f,
-            ElvenSceptreBeam.DrainAmount * 60 / ElvenSceptreBeam.DrainIntervalTicks);
+            ElvenSceptreBeam.DrainAmount * 60 / ElvenSceptreBeam.DrainIntervalTicks,
+            CooldownTicks / 60f);
 
         public override void SetStaticDefaults()
         {
@@ -48,8 +53,9 @@ namespace Reign_of_the_Ancients.Items.Weapons
             Item.value = Item.sellPrice(gold: 1, silver: 50);
         }
 
-        // Only one beam at a time.
-        public override bool CanUseItem(Player player) => player.ownedProjectileCounts[Item.shoot] < 1;
+        // Only one beam at a time, and not during the cooldown after a beam.
+        public override bool CanUseItem(Player player) =>
+            player.ownedProjectileCounts[Item.shoot] < 1 && Main.GameUpdateCount >= cooldownUntil;
 
         public override void AddRecipes()
         {

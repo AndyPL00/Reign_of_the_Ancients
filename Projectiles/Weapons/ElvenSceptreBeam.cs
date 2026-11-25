@@ -177,6 +177,16 @@ namespace Reign_of_the_Ancients.Projectiles.Weapons
             return MaxLength;
         }
 
+        // Start the sceptre's cooldown when the beam ends (owner only; the cooldown is local to the item).
+        public override void OnKill(int timeLeft)
+        {
+            Player player = Main.player[Projectile.owner];
+            if (Projectile.owner == Main.myPlayer && player.HeldItem.ModItem is ElvenSceptre sceptre)
+            {
+                sceptre.cooldownUntil = Main.GameUpdateCount + (uint)ElvenSceptre.CooldownTicks;
+            }
+        }
+
         public override bool? CanDamage() => Active;
 
         public override bool? Colliding(Rectangle projHitbox, Rectangle targetHitbox)
