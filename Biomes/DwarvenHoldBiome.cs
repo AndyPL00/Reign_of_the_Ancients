@@ -44,7 +44,7 @@ namespace Reign_of_the_Ancients.Biomes
                 return GreatHall;
             }
             if (wall == ModContent.WallType<HoldForgeWall>() || wall == ModContent.WallType<HoldPipeWall>() || wall == ModContent.WallType<HoldCogWall>()
-                || wall == ModContent.WallType<HoldMoltenStreamWall>())
+                || wall == ModContent.WallType<HoldMoltenStreamWall>() || wall == ModContent.WallType<HoldTreasuryWall>())
             {
                 return Forges;
             }
@@ -52,7 +52,8 @@ namespace Reign_of_the_Ancients.Biomes
             {
                 return Mines;
             }
-            if (wall == ModContent.WallType<FoundryWall>() || wall == ModContent.WallType<FoundryMoltenWall>())
+            if (wall == ModContent.WallType<FoundryWall>() || wall == ModContent.WallType<FoundryMoltenWall>()
+                || wall == ModContent.WallType<FoundryPillarWall>() || wall == ModContent.WallType<FoundryBandWall>())
             {
                 return Foundry;
             }

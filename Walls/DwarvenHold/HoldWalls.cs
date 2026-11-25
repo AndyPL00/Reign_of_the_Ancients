@@ -100,6 +100,13 @@ namespace Reign_of_the_Ancients.Walls.DwarvenHold
         protected override Color MapColor => new Color(110, 105, 95);
     }
 
+    // Gold-brick walls of the treasury vault off the east workshop.
+    public class HoldTreasuryWall : HoldWallBase
+    {
+        protected override int VanillaWallID => WallID.GoldBrick;
+        protected override Color MapColor => new Color(150, 120, 40);
+    }
+
     // ----- Zone 3: mines -----
     public class HoldMineWall : HoldWallBase
     {
@@ -112,6 +119,20 @@ namespace Reign_of_the_Ancients.Walls.DwarvenHold
     {
         protected override int VanillaWallID => WallID.ObsidianBrick;
         protected override Color MapColor => new Color(70, 30, 22);
+    }
+
+    // The foundry's giant piston columns...
+    public class FoundryPillarWall : HoldWallBase
+    {
+        protected override int VanillaWallID => WallID.StoneSlab;
+        protected override Color MapColor => new Color(60, 55, 58);
+    }
+
+    // ...and the brass bands around them.
+    public class FoundryBandWall : HoldWallBase
+    {
+        protected override int VanillaWallID => WallID.CopperPlating;
+        protected override Color MapColor => new Color(160, 110, 50);
     }
 
     // Glowing molten seams behind the foundry's lava channels.

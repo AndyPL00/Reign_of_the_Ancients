@@ -16,77 +16,104 @@ namespace Reign_of_the_Ancients.WorldGeneration
         public int GateX;      // column of the gate's outer face
         public int FloorY;     // great hall floor row
         public int Side;       // +1: the hold extends right of the gate, -1: left
-        public Rectangle Gatehouse, Hall, Forge, Mine, Foundry;
+        public Rectangle Gatehouse, Hall, Forge, Treasury, Mine, Foundry;
         public Rectangle Gate;     // the sealed gate blocks
         public Rectangle Bounds;   // everything the builder may touch (except the approach tunnel)
         public Point Machine;      // top-left tile of the Titan control machine
     }
 
-    // Layout (side view, the gate on the left when Side = +1), styled after Andy's reference screenshots:
+    // Layout (side view, gate on the left when Side = +1), styled after Andy's reference screenshots:
     //
-    //   [lava-moss cave] |GATE| grey gatehouse | ==== great hall: red brick, V gables, pillars, tall windows ==== |
-    //                                                         (glowing molten seam under the floor)        shaft
-    //        | ==== forges: ceilings stepping up per bay; crucible + furnace banks, water tanks, ore buckets ==== |
-    //          shaft
-    //   | ======== mine rail tunnel (track, timber supports) ====================================== | foundry |
-    //        side tunnels wander up and down from the rail tunnel, ending in small mining pockets    (Titan arena)
+    //  [lava-moss cave] |GATE| grey keep | == great hall: red brick, V gables, pillars, windows; lift bay in the middle == |
+    //                                                              lift
+    //            | workshop | ===== great forge: symmetric, ceiling steps up to the middle ===== | workshop | treasury |
+    //                 |       landing above the crucible, furnace banks, smokestacks, tanks, ore carts        |
+    //   | ========== mine rail tunnel ============================================================= | ==== foundry ==== |
+    //        excavation cavern  ==== lower rail tunnel ====  excavation cavern                         (Titan arena)
+    //        side tunnels wander off everywhere, ending in small mining pockets
     //
-    // Everything is carved into one grid first, then wrapped in a solid lining of hold blocks, so the hold is
-    // sealed all around (its blocks can't be broken before Skeletron) and rooms automatically share walls.
-    // Glowing molten seams run through the lining: one tile under each floor, and as an outline around the
-    // halls, forges and foundry.
+    // Everything is carved into one grid first, then wrapped in a solid lining of hold blocks, so the hold is sealed
+    // all around (its blocks can't be broken before Skeletron) and rooms automatically share walls. Glowing molten
+    // seams run through the lining: one tile under each floor, and as an outline around the halls, forge and foundry.
+    // Prototyped with a preview renderer (layout preview script), so the numbers below are tuned together.
     public static class DwarvenHoldBuilder
     {
-        public const int Lining = 4;               // thickness of the sealed shell around every space
+        public const int Lining = 4;
 
-        // ---- Rooms, in local coords: u = tiles from the gate along Side, v = rows below the hall floor ----
+        // ---- Gate, keep and great hall (local coords: u = tiles from the gate along Side, v = rows below the hall floor) ----
         public const int GateHeight = 7;
-        public const int GatehouseWidth = 26, GatehouseHeight = 20;
-        public const int HallWidth = 154, HallHeight = 24;
-        public const int HallPillarSpacing = 22;
-        public const int HallGableDepth = 6;       // V-shaped gables: lowest at the pillars, peak mid-bay
-        public const int PillarHalfWidth = 2;      // 5-wide pillars
-        public const int WindowHeight = 14;
-        public const int LevelGap = 6;             // thin stacked floors between levels, like the reference
-        public const int ForgeWidth = 170, ForgeHeight = 20;
-        public const int ForgeBayWidth = 34;
-        public const int ForgeVaultDepth = 5;      // ceilings step up toward the middle of each bay
-        public const int MineLength = 300, MineHeight = 9;
-        public const int MineBeamSpacing = 8;
-        public const int FoundryWidth = 130, FoundryHeight = 36;
-        public const int ShaftWidth = 8;
-        public const int ShaftPlatformEvery = 5;
+        public const int KeepWidth = 26, KeepHeight = 22, KeepChamfer = 4;
+        public const int HallWidth = 154, HallHeight = 24;   // 7 bays; the middle one holds the lift
+        public const int PillarSpacing = 22;
+        public const int GableDepth = 6;
+        public const int PillarHalfWidth = 2;
+        public const int LiftWidth = 8;
+        public const int LevelGap = 6;                       // thin stacked floors between levels
 
-        // ---- Forge machinery ----
-        public const int BigFurnaceWidth = 9, BigFurnaceHeight = 7;
-        public const int SmallFurnaceWidth = 7, SmallFurnaceHeight = 5;
-        public const int SmokestackHeight = 4;
-        public const int TankWidth = 8, TankHeight = 6;
+        // ---- Great forge, workshops, treasury ----
+        public const int ForgeWidth = 124, ForgeHeight = 32;
+        public const int ForgeFlatHalfWidth = 18;            // high flat middle of the stepped ceiling
+        public const int ForgeMaxStep = 14;
+        public const int StepWidth = 4, StepHeight = 2;
+        public const int WorkshopWidth = 40, WorkshopHeight = 14;
+        public const int ForgeDoorHeight = 8;
+        public const int TreasuryWidth = 20, TreasuryHeight = 10, TreasuryDoorHeight = 5;
         public const int CrucibleHalfWidth = 3;
+        public const int BigFurnaceWidth = 11, BigFurnaceHeight = 9;
+        public const int SmallFurnaceWidth = 7, SmallFurnaceHeight = 5, SmokestackHeight = 6;
+        public const int TankWidth = 9, TankHeight = 8;
 
         // ---- Mines ----
-        public const int BranchCount = 7;
-        public const int BranchMinSteps = 40, BranchMaxSteps = 75;
-        public const int BranchRadius = 2;
-        public const int PocketRadius = 4;
-        public const int BranchMaxDepth = 108;
+        public const int MineLength = 334, MineHeight = 9;
+        public const int LowerTunnelTop = 88, LowerTunnelFloor = 96, LowerTunnelStart = 104, LowerTunnelEnd = 232;
+        public const int BeamSpacing = 8;
+        public const int SideTunnels = 10;
+        public const int TunnelMinSteps = 35, TunnelMaxSteps = 70;
+        public const int TunnelRadius = 2, PocketRadius = 4;
+        public const float OreVeinChance = 0.035f;
+        private static readonly (int u, int v, int rx, int ry)[] Caverns = { (90, 82, 24, 11), (250, 92, 26, 12) };
 
-        // ---- Foundry ----
-        public const int TroughHeightAboveFloor = 25;
-        public const int TroughInset = 20;
-        public const int MoltenFallSpacing = 18;
-        public const int FarPitWidth = 6;
+        // ---- Titan foundry ----
+        public const int FoundryWidth = 140, FoundryHeight = 40;
+        public const int FoundryFlatHalfWidth = 25, FoundryMaxStep = 12;
+        public const int FoundryPillarSpacing = 28;
+        public const int FarChannelWidth = 6;
+        public const int DaisTiers = 3;
 
         // ---- Approach outside the gate ----
         public const int ApproachRadiusX = 12, ApproachRadiusY = 7;
         public const int ApproachTunnelSteps = 140;
         public const int LavaMossRange = 30;
 
-        // Local grid extents.
-        private const int UMin = -40, UMax = 460, VMin = -36, VMax = 126;
+        // Derived local coordinates.
+        private const int KeepStart = Lining;
+        private const int HallStart = KeepStart + KeepWidth + Lining;
+        private const int HallEnd = HallStart + HallWidth;
+        private const int Axis = HallStart + HallWidth / 2;
+        private const int ForgeStart = Axis - ForgeWidth / 2;
+        private const int ForgeEnd = ForgeStart + ForgeWidth;
+        private const int ForgeTop = LevelGap;
+        private const int ForgeFloor = ForgeTop + ForgeHeight;
+        private const int WestShopStart = ForgeStart - Lining - WorkshopWidth;
+        private const int EastShopStart = ForgeEnd + Lining;
+        private const int TreasuryStart = EastShopStart + WorkshopWidth + Lining;
+        private const int MineTop = ForgeFloor + LevelGap + 4;
+        private const int MineFloor = MineTop + MineHeight;
+        private const int MineEnd = MineLength;
+        private const int WestShaft = WestShopStart + 10;
+        private const int EastShaft = EastShopStart + WorkshopWidth - 18;
+        private const int FoundryStart = MineEnd + Lining;
+        private const int FoundryEnd = FoundryStart + FoundryWidth;
+        private const int FoundryTop = MineFloor - FoundryHeight;
+        private const int FoundryAxis = FoundryStart + FoundryWidth / 2;
+        private const int Landing = ForgeFloor - 15;         // lift landing, just above the crucible
+        private const int CrucibleBottom = ForgeFloor - 11;
+
+        private const int UMin = -40, UMax = FoundryEnd + 10, VMin = -36, VMax = 150;
 
         private static ushort brick, redBrick, moltenTrim, mineRock, foundryBrick, gateTile;
-        private static ushort gatehouseWall, hallWall, pillarWall, windowWall, forgeWall, cogWall, pipeWall, streamWall, mineWall, foundryWall, moltenWall;
+        private static ushort keepWall, hallWall, pillarWall, windowWall, forgeWall, cogWall, pipeWall, streamWall, treasuryWall;
+        private static ushort mineWall, foundryWall, foundryPillarWall, foundryBandWall, moltenWall;
 
         private static byte[,] zone;     // carved space, by hold zone (0 = not carved)
         private static byte[,] lining;   // lining blocks, by zone of the space they wrap
@@ -96,14 +123,15 @@ namespace Reign_of_the_Ancients.WorldGeneration
         public static HoldLayout Plan(int gateX, int floorY, int side)
         {
             var l = new HoldLayout { GateX = gateX, FloorY = floorY, Side = side };
-            l.Gatehouse = R(l, Lining, -GatehouseHeight, GatehouseWidth, GatehouseHeight);
+            l.Gatehouse = R(l, KeepStart, -KeepHeight, KeepWidth, KeepHeight);
             l.Hall = R(l, HallStart, -HallHeight, HallWidth, HallHeight);
             l.Forge = R(l, ForgeStart, ForgeTop, ForgeWidth, ForgeHeight);
-            l.Mine = R(l, MineStart, MineTop, MineLength, MineHeight);
+            l.Treasury = R(l, TreasuryStart, ForgeFloor - TreasuryHeight, TreasuryWidth, TreasuryHeight);
+            l.Mine = R(l, 0, MineTop, MineLength, MineHeight);
             l.Foundry = R(l, FoundryStart, FoundryTop, FoundryWidth, FoundryHeight);
             l.Gate = R(l, 0, -GateHeight, Lining, GateHeight);
             l.Bounds = R(l, UMin, VMin, UMax - UMin, VMax - VMin);
-            l.Machine = R(l, FoundryStart + 4, MineFloor - 3, 3, 3).Location;
+            l.Machine = R(l, FoundryStart + 7, MineFloor - DaisTiers - 3, 3, 3).Location;
             return l;
         }
 
@@ -117,22 +145,6 @@ namespace Reign_of_the_Ancients.WorldGeneration
         private static int X(HoldLayout l, int u) => l.GateX + l.Side * u;
         private static int Y(HoldLayout l, int v) => l.FloorY + v;
 
-        // Local coords of each room.
-        private static int HallStart => Lining + GatehouseWidth + Lining;
-        private static int HallEnd => HallStart + HallWidth;
-        private static int ForgeTop => LevelGap;
-        private static int ForgeFloor => ForgeTop + ForgeHeight;
-        private static int ForgeStart => HallEnd - ForgeWidth;
-        private static int MineTop => ForgeFloor + LevelGap + 2;
-        private static int MineFloor => MineTop + MineHeight;
-        private static int MineStart => 10;
-        private static int MineEnd => MineStart + MineLength;
-        private static int FoundryStart => MineEnd + Lining;
-        private static int FoundryEnd => FoundryStart + FoundryWidth;
-        private static int FoundryTop => MineFloor - FoundryHeight;
-        private static int Shaft1Start => HallEnd - 12;
-        private static int Shaft2Start => ForgeStart + 6;
-
         public static void Build(HoldLayout l)
         {
             LoadTypes();
@@ -141,15 +153,16 @@ namespace Reign_of_the_Ancients.WorldGeneration
             dist = new byte[UMax - UMin, VMax - VMin];
             gateCell = new bool[UMax - UMin, VMax - VMin];
 
-            CarveSpaces();
-            CarveBranches();
+            CarveRooms();
+            CarveMines();
             BuildLining();
             ApplyToWorld(l);
             Approach(l);
 
-            GatehouseDetails(l);
+            KeepDetails(l);
             HallDetails(l);
             ForgeDetails(l);
+            WorkshopDetails(l);
             MineDetails(l);
             FoundryDetails(l);
 
@@ -168,7 +181,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
             mineRock = (ushort)ModContent.TileType<HoldMineRock>();
             foundryBrick = (ushort)ModContent.TileType<FoundryBrick>();
             gateTile = (ushort)ModContent.TileType<HoldGate>();
-            gatehouseWall = (ushort)ModContent.WallType<HoldGatehouseWall>();
+            keepWall = (ushort)ModContent.WallType<HoldGatehouseWall>();
             hallWall = (ushort)ModContent.WallType<HoldHallWall>();
             pillarWall = (ushort)ModContent.WallType<HoldPillarWall>();
             windowWall = (ushort)ModContent.WallType<HoldWindowWall>();
@@ -176,8 +189,11 @@ namespace Reign_of_the_Ancients.WorldGeneration
             cogWall = (ushort)ModContent.WallType<HoldCogWall>();
             pipeWall = (ushort)ModContent.WallType<HoldPipeWall>();
             streamWall = (ushort)ModContent.WallType<HoldMoltenStreamWall>();
+            treasuryWall = (ushort)ModContent.WallType<HoldTreasuryWall>();
             mineWall = (ushort)ModContent.WallType<HoldMineWall>();
             foundryWall = (ushort)ModContent.WallType<FoundryWall>();
+            foundryPillarWall = (ushort)ModContent.WallType<FoundryPillarWall>();
+            foundryBandWall = (ushort)ModContent.WallType<FoundryBandWall>();
             moltenWall = (ushort)ModContent.WallType<FoundryMoltenWall>();
         }
 
@@ -186,7 +202,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
         private static bool InGrid(int u, int v) => u >= UMin && u < UMax && v >= VMin && v < VMax;
         private static int ZoneAt(int u, int v) => InGrid(u, v) ? zone[u - UMin, v - VMin] : 0;
         private static int LiningAt(int u, int v) => InGrid(u, v) ? lining[u - UMin, v - VMin] : 0;
-        private static bool IsGatehouse(int u) => u < HallStart;
+        private static bool InKeep(int u, int v) => u < HallStart && v < 0;
 
         private static void Mark(int u0, int u1, int v0, int v1, int z)
         {
@@ -202,12 +218,39 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        private static void Unmark(int u0, int u1, int v0, int v1) => Mark(u0, u1, v0, v1, DwarvenHold.NoZone);
-
-        private static void CarveSpaces()
+        private static void SetZone(int u, int v, int z)
         {
-            // Gatehouse, gate passage and the doorway into the hall.
-            Mark(Lining, Lining + GatehouseWidth, -GatehouseHeight, 0, DwarvenHold.GreatHall);
+            if (InGrid(u, v))
+            {
+                zone[u - UMin, v - VMin] = (byte)z;
+            }
+        }
+
+        // V gables: deepest at the pillars, peak in the middle of each bay.
+        private static int GableDepthAt(int u)
+        {
+            int inBay = (u - HallStart) % PillarSpacing;
+            return Math.Max(0, GableDepth - Math.Min(inBay, PillarSpacing - inBay) / 2);
+        }
+
+        // A ceiling that is high and flat in the middle and steps down toward the walls.
+        private static int SteppedDepth(int u, int axis, int flatHalfWidth, int maxDepth)
+        {
+            int off = Math.Abs(u - axis) - flatHalfWidth;
+            return off <= 0 ? 0 : Math.Min(maxDepth, (off / StepWidth + 1) * StepHeight);
+        }
+
+        private static int ForgeCeiling(int u) => ForgeTop + SteppedDepth(u, Axis, ForgeFlatHalfWidth, ForgeMaxStep);
+        private static int FoundryCeiling(int u) => FoundryTop + SteppedDepth(u, FoundryAxis, FoundryFlatHalfWidth, FoundryMaxStep);
+
+        private static void CarveRooms()
+        {
+            // Grey keep with stepped upper corners, the gate passage, and the doorway into the hall.
+            for (int u = KeepStart; u < KeepStart + KeepWidth; u++)
+            {
+                int inner = Math.Min(u - KeepStart, KeepStart + KeepWidth - 1 - u);
+                Mark(u, u + 1, -KeepHeight + Math.Max(0, KeepChamfer - inner), 0, DwarvenHold.GreatHall);
+            }
             Mark(0, Lining, -GateHeight, 0, DwarvenHold.GreatHall);
             for (int u = 0; u < Lining; u++)
             {
@@ -216,106 +259,144 @@ namespace Reign_of_the_Ancients.WorldGeneration
                     gateCell[u - UMin, v - VMin] = true;
                 }
             }
-            Mark(Lining + GatehouseWidth, HallStart, -9, 0, DwarvenHold.GreatHall);
+            Mark(KeepStart + KeepWidth, HallStart, -9, 0, DwarvenHold.GreatHall);
 
-            // Great hall under V-shaped stepped gables.
-            Mark(HallStart, HallEnd, -HallHeight, 0, DwarvenHold.GreatHall);
+            // Great hall under V-shaped gables, and the lift down to the forge in its middle bay.
             for (int u = HallStart; u < HallEnd; u++)
             {
-                Unmark(u, u + 1, -HallHeight, -HallHeight + HallGableDepthAt(u));
+                Mark(u, u + 1, -HallHeight + GableDepthAt(u), 0, DwarvenHold.GreatHall);
             }
+            Mark(Axis - LiftWidth / 2, Axis + LiftWidth / 2, 0, ForgeTop, DwarvenHold.GreatHall);
 
-            // Shaft from the hall down to the forges.
-            Mark(Shaft1Start, Shaft1Start + ShaftWidth, 0, ForgeTop, DwarvenHold.GreatHall);
-
-            // Forges, each bay's ceiling stepping up toward its middle.
-            Mark(ForgeStart, HallEnd, ForgeTop, ForgeFloor, DwarvenHold.Forges);
-            for (int u = ForgeStart; u < HallEnd; u++)
+            // Great forge with its stepped ceiling, the two workshops, the treasury and the doorways between them.
+            for (int u = ForgeStart; u < ForgeEnd; u++)
             {
-                Unmark(u, u + 1, ForgeTop, ForgeTop + ForgeVaultDepthAt(u));
+                Mark(u, u + 1, ForgeCeiling(u), ForgeFloor, DwarvenHold.Forges);
             }
+            Mark(WestShopStart, WestShopStart + WorkshopWidth, ForgeFloor - WorkshopHeight, ForgeFloor, DwarvenHold.Forges);
+            Mark(EastShopStart, EastShopStart + WorkshopWidth, ForgeFloor - WorkshopHeight, ForgeFloor, DwarvenHold.Forges);
+            Mark(WestShopStart + WorkshopWidth, ForgeStart, ForgeFloor - ForgeDoorHeight, ForgeFloor, DwarvenHold.Forges);
+            Mark(ForgeEnd, EastShopStart, ForgeFloor - ForgeDoorHeight, ForgeFloor, DwarvenHold.Forges);
+            Mark(TreasuryStart, TreasuryStart + TreasuryWidth, ForgeFloor - TreasuryHeight, ForgeFloor, DwarvenHold.Forges);
+            Mark(EastShopStart + WorkshopWidth, TreasuryStart, ForgeFloor - TreasuryDoorHeight, ForgeFloor, DwarvenHold.Forges);
 
-            // Shaft from the forges down to the mines.
-            Mark(Shaft2Start, Shaft2Start + ShaftWidth, ForgeFloor, MineTop, DwarvenHold.Forges);
+            // Shafts from the workshops down to the mines.
+            Mark(WestShaft, WestShaft + 8, ForgeFloor, MineTop, DwarvenHold.Forges);
+            Mark(EastShaft, EastShaft + 8, ForgeFloor, MineTop, DwarvenHold.Forges);
 
-            // Mine rail tunnel, and the doorway into the foundry.
-            Mark(MineStart, MineEnd, MineTop, MineFloor, DwarvenHold.Mines);
-            Mark(MineEnd, FoundryStart, MineFloor - 9, MineFloor, DwarvenHold.Mines);
-
-            // Titan foundry.
-            Mark(FoundryStart, FoundryEnd, FoundryTop, MineFloor, DwarvenHold.Foundry);
-        }
-
-        // Straight, 1-tile steps: deepest at the pillars, flush at the peak in the middle of each bay.
-        private static int HallGableDepthAt(int u)
-        {
-            int inBay = (u - HallStart) % HallPillarSpacing;
-            int fromPillar = Math.Min(inBay, HallPillarSpacing - inBay);
-            return Math.Max(0, HallGableDepth - fromPillar / 2);
-        }
-
-        // Low at the bay edges, stepping up 1 tile every 2 tiles to a flat high middle.
-        private static int ForgeVaultDepthAt(int u)
-        {
-            int inBay = (u - ForgeStart) % ForgeBayWidth;
-            int fromEdge = Math.Min(inBay, ForgeBayWidth - 1 - inBay);
-            return Math.Max(0, ForgeVaultDepth - fromEdge / 2);
-        }
-
-        private static List<(int a, int b)> ForgeBays()
-        {
-            var bays = new List<(int a, int b)>();
-            for (int a = ForgeStart; a < HallEnd; a += ForgeBayWidth)
+            // Titan foundry with its stepped ceiling.
+            for (int u = FoundryStart; u < FoundryEnd; u++)
             {
-                bays.Add((a, Math.Min(a + ForgeBayWidth, HallEnd) - 1));
+                Mark(u, u + 1, FoundryCeiling(u), MineFloor, DwarvenHold.Foundry);
             }
-            return bays;
         }
 
-        // Side tunnels wander off the rail tunnel and end in small mining pockets.
-        private static void CarveBranches()
+        private static void CarveMines()
         {
-            int spacing = (MineLength - 40) / BranchCount;
-            for (int i = 0; i < BranchCount; i++)
+            Mark(0, MineEnd, MineTop, MineFloor, DwarvenHold.Mines);
+            Mark(MineEnd, FoundryStart, MineFloor - 10, MineFloor, DwarvenHold.Mines);
+            foreach (var c in Caverns)
             {
-                int u = MineStart + 25 + i * spacing + WorldGen.genRand.Next(-6, 7);
-                bool up = i % 2 == 0;
-                int v = up ? MineTop : MineFloor - 1;
-                int du = 0, dv = up ? -1 : 1;
-                int steps = WorldGen.genRand.Next(BranchMinSteps, BranchMaxSteps + 1);
+                Cavern(c.u, c.v, c.rx, c.ry);
+            }
+            Mark(LowerTunnelStart, LowerTunnelEnd, LowerTunnelTop, LowerTunnelFloor, DwarvenHold.Mines);
 
-                for (int s = 0; s < steps; s++)
+            // Winding passages from the rail tunnel down into each cavern.
+            Connect(70, MineFloor, Caverns[0].u - 6, Caverns[0].v - 8);
+            Connect(268, MineFloor, Caverns[1].u + 4, Caverns[1].v - 10);
+
+            // Side tunnels off the rail tunnel and off each cavern.
+            for (int i = 0; i < SideTunnels; i++)
+            {
+                int u = 20 + i * 31 + WorldGen.genRand.Next(-5, 6);
+                bool down = i % 2 == 1;
+                Wander(u, down ? MineFloor - 1 : MineTop, 0, down ? 1 : -1, WorldGen.genRand.Next(TunnelMinSteps, TunnelMaxSteps + 1));
+            }
+            foreach (var c in Caverns)
+            {
+                int dir = WorldGen.genRand.NextBool() ? 1 : -1;
+                Wander(c.u + dir * c.rx, c.v, dir, 0, WorldGen.genRand.Next(30, 56));
+            }
+        }
+
+        // A lumpy elliptical cave with a flattened floor.
+        private static void Cavern(int cu, int cv, int rx, int ry)
+        {
+            var harmonics = new (float amp, int k, float phase)[3];
+            for (int i = 0; i < harmonics.Length; i++)
+            {
+                harmonics[i] = (WorldGen.genRand.NextFloat(0.06f, 0.16f), WorldGen.genRand.Next(2, 6), WorldGen.genRand.NextFloat(MathHelper.TwoPi));
+            }
+            for (int u = cu - rx - 4; u <= cu + rx + 4; u++)
+            {
+                for (int v = cv - ry - 4; v <= cv + ry + 4; v++)
                 {
-                    if (WorldGen.genRand.NextBool(6))
+                    float nu = (u - cu) / (float)rx, nv = (v - cv) / (float)ry;
+                    float angle = (float)Math.Atan2(nv, nu);
+                    float r = 1f;
+                    foreach (var h in harmonics)
                     {
-                        int pick = WorldGen.genRand.Next(4);
-                        (du, dv) = pick switch
-                        {
-                            0 => (1, 0),
-                            1 => (-1, 0),
-                            2 => (0, up ? -1 : 1),
-                            _ => (WorldGen.genRand.NextBool() ? 1 : -1, 0),
-                        };
+                        r += h.amp * (float)Math.Sin(h.k * angle + h.phase);
                     }
-                    int nu = u + du, nv = v + dv;
-                    if (!BranchCellAllowed(nu, nv))
+                    if (nu * nu + nv * nv <= r * r && v < cv + ry * 0.75f)
                     {
-                        du = -du;
-                        dv = -dv;
-                        continue;
+                        SetZone(u, v, DwarvenHold.Mines);
                     }
-                    u = nu;
-                    v = nv;
-                    CarveBlob(u, v, BranchRadius);
                 }
-                CarveBlob(u, v, PocketRadius);
             }
         }
 
-        private static bool BranchCellAllowed(int u, int v) => u > 4 && u < MineEnd - 10 && v > VMin + 10 && v < BranchMaxDepth;
+        private static void Connect(int u, int v, int u1, int v1)
+        {
+            while (u != u1 || v != v1)
+            {
+                if (WorldGen.genRand.NextFloat() < 0.6f && v != v1)
+                {
+                    v += Math.Sign(v1 - v);
+                }
+                else if (u != u1)
+                {
+                    u += Math.Sign(u1 - u);
+                }
+                else
+                {
+                    v += Math.Sign(v1 - v);
+                }
+                Blob(u, v, TunnelRadius);
+            }
+        }
 
-        // Carves a round mine blob, but never closer than a full lining to the hall, forges or foundry.
-        private static void CarveBlob(int cu, int cv, int r)
+        // A tunnel that mostly keeps going and sometimes turns, ending in a small mining pocket.
+        private static void Wander(int u, int v, int du, int dv, int steps)
+        {
+            for (int s = 0; s < steps; s++)
+            {
+                if (WorldGen.genRand.NextBool(6))
+                {
+                    (du, dv) = WorldGen.genRand.Next(4) switch
+                    {
+                        0 => (1, 0),
+                        1 => (-1, 0),
+                        2 => (0, dv != 0 ? dv : 1),
+                        _ => (du != 0 ? du : 1, 0),
+                    };
+                }
+                int nu = u + du, nv = v + dv;
+                if (nu <= 4 || nu >= MineEnd - 6 || nv <= MineTop - 2 || nv >= VMax - 8)
+                {
+                    du = -du;
+                    dv = -dv;
+                    continue;
+                }
+                u = nu;
+                v = nv;
+                Blob(u, v, TunnelRadius);
+            }
+            Blob(u, v, PocketRadius);
+        }
+
+        // Carves a round mine blob, but never closer than a full lining to the rooms.
+        private static void Blob(int cu, int cv, int r)
         {
             for (int u = cu - r; u <= cu + r; u++)
             {
@@ -325,7 +406,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
                     {
                         continue;
                     }
-                    if (!NearOtherZone(u, v, Lining + 1, DwarvenHold.Mines))
+                    if (!NearOtherZone(u, v, Lining + 1))
                     {
                         zone[u - UMin, v - VMin] = DwarvenHold.Mines;
                     }
@@ -333,20 +414,20 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        private static bool NearOtherZone(int u, int v, int range, int own)
+        private static bool NearOtherZone(int u, int v, int range)
         {
             for (int a = u - range; a <= u + range; a++)
             {
                 for (int b = v - range; b <= v + range; b++)
                 {
                     int z = ZoneAt(a, b);
-                    if (z != 0 && z != own)
+                    if (z != 0 && z != DwarvenHold.Mines)
                     {
                         return true;
                     }
                 }
             }
-            return u < Lining * 2 + 2; // keep clear of the approach cave in front of the gate
+            return u < Lining * 2 + 2; // keep clear of the approach cave
         }
 
         // Every non-carved cell within Lining of a carved one becomes a hold block; remember how far it is.
@@ -385,7 +466,6 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        // The open space right in front of the gate stays clear (it's the approach cave).
         private static bool IsGateFront(int u, int v) => u < 0 && u >= -Lining && v >= -GateHeight && v < 0;
 
         private static void ApplyToWorld(HoldLayout l)
@@ -413,39 +493,37 @@ namespace Reign_of_the_Ancients.WorldGeneration
                             tile.ClearTile();
                         }
                         tile.LiquidAmount = 0;
-                        SetWall(x, y, SpaceWall(z, u));
+                        SetWall(x, y, SpaceWall(z, u, v));
                     }
                     else if (lz != 0)
                     {
                         SetTile(x, y, LiningBlock(u, v, lz));
-                        SetWall(x, y, SpaceWall(lz, u));
+                        SetWall(x, y, SpaceWall(lz, u, v));
                     }
                 }
             }
         }
 
-        private static ushort SpaceWall(int z, int u) => z switch
+        private static ushort SpaceWall(int z, int u, int v) => z switch
         {
-            DwarvenHold.GreatHall => IsGatehouse(u) ? gatehouseWall : hallWall,
+            DwarvenHold.GreatHall => InKeep(u, v) ? keepWall : hallWall,
             DwarvenHold.Forges => forgeWall,
             DwarvenHold.Mines => mineWall,
             _ => foundryWall,
         };
 
-        // Which block a lining cell gets: grey stone floor tops, molten seams, or the zone's brick.
+        // Grey stone floor tops, molten seams, or the zone's brick.
         private static ushort LiningBlock(int u, int v, int z)
         {
             if (z == DwarvenHold.Mines)
             {
                 return mineRock;
             }
-            if (z == DwarvenHold.GreatHall && IsGatehouse(u))
+            if (z == DwarvenHold.GreatHall && InKeep(u, v))
             {
                 return brick;
             }
-
-            // How far below a carved floor this cell is (0 = not under a floor).
-            int underFloor = 0;
+            int underFloor = 0; // rows below a carved space directly above (0 = none within the lining)
             for (int k = 1; k <= Lining; k++)
             {
                 if (ZoneAt(u, v - k) != 0)
@@ -454,14 +532,12 @@ namespace Reign_of_the_Ancients.WorldGeneration
                     break;
                 }
             }
-
             if (z != DwarvenHold.Foundry && underFloor == 1)
             {
-                return brick; // thin grey floor top
+                return brick;
             }
             int d = dist[u - UMin, v - VMin];
-            bool seam = underFloor == 2 || (d == Lining - 1 && (underFloor == 0 || underFloor > 3));
-            if (seam)
+            if (underFloor == 2 || (d == Lining - 1 && (underFloor == 0 || underFloor > 3)))
             {
                 return moltenTrim;
             }
@@ -485,9 +561,8 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 }
             }
 
-            float tu = cu, tv = cv;
-            float dirU = -1f, dirV = -0.6f;
-            var tunnel = new List<Point>();
+            float tu = cu, tv = cv, dirU = -1f, dirV = -0.6f;
+            int minU = cu - ApproachRadiusX - 6, minV = cv - ApproachRadiusY - 6;
             for (int s = 0; s < ApproachTunnelSteps; s++)
             {
                 dirU = MathHelper.Clamp(dirU + WorldGen.genRand.NextFloat(-0.3f, 0.3f), -1f, 0.3f);
@@ -507,20 +582,14 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 }
                 if (s < LavaMossRange)
                 {
-                    tunnel.Add(new Point((int)tu, (int)tv));
+                    minU = Math.Min(minU, (int)tu - 6);
+                    minV = Math.Min(minV, (int)tv - 6);
                 }
             }
 
-            // Lava moss on exposed stone around the cave and the first stretch of the tunnel.
-            int minU = cu - ApproachRadiusX - 6, maxU = 0, minV = cv - ApproachRadiusY - 6, maxV = 4;
-            foreach (Point p in tunnel)
+            for (int u = minU; u <= 0; u++)
             {
-                minU = Math.Min(minU, p.X - 6);
-                minV = Math.Min(minV, p.Y - 6);
-            }
-            for (int u = minU; u <= maxU; u++)
-            {
-                for (int v = minV; v <= maxV; v++)
+                for (int v = minV; v <= 4; v++)
                 {
                     int x = X(l, u), y = Y(l, v);
                     if (ZoneAt(u, v) != 0 || LiningAt(u, v) != 0 || !WorldGen.InWorld(x, y, 10))
@@ -536,12 +605,9 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        private static bool TouchesAir(int x, int y)
-        {
-            return !Main.tile[x + 1, y].HasTile || !Main.tile[x - 1, y].HasTile || !Main.tile[x, y + 1].HasTile || !Main.tile[x, y - 1].HasTile;
-        }
+        private static bool TouchesAir(int x, int y) =>
+            !Main.tile[x + 1, y].HasTile || !Main.tile[x - 1, y].HasTile || !Main.tile[x, y + 1].HasTile || !Main.tile[x, y - 1].HasTile;
 
-        // Clears a natural tile, but never one of the hold's or another structure's furniture.
         private static void ClearNatural(HoldLayout l, int u, int v)
         {
             if (ZoneAt(u, v) != 0 || LiningAt(u, v) != 0)
@@ -564,155 +630,93 @@ namespace Reign_of_the_Ancients.WorldGeneration
 
         // ================= Details =================
 
-        private static void GatehouseDetails(HoldLayout l)
+        private static void KeepDetails(HoldLayout l)
         {
-            int gx = Lining + 4;
-            Place(X(l, gx), Y(l, -1), ItemID.ArmorStatue, l.Side);
-            Place(X(l, gx + 4), Y(l, -1), ItemID.ArmorStatue, l.Side);
-            Place(X(l, Lining + GatehouseWidth - 5), Y(l, -1), ItemID.Keg);
-            Place(X(l, Lining + GatehouseWidth / 2), Y(l, -12), ItemID.WeaponRack);
-            Place(X(l, Lining + GatehouseWidth / 2), Y(l, -GatehouseHeight), ItemID.ChainLantern);
-            PlaceSingle(X(l, Lining + 2), Y(l, -10), ItemID.Torch);
-            PlaceSingle(X(l, Lining + GatehouseWidth - 2), Y(l, -10), ItemID.Torch);
+            Place(X(l, KeepStart + 5), Y(l, -1), ItemID.ArmorStatue, l.Side);
+            Place(X(l, KeepStart + 9), Y(l, -1), ItemID.ArmorStatue, l.Side);
+            Place(X(l, KeepStart + KeepWidth - 5), Y(l, -1), ItemID.Keg);
+            Place(X(l, KeepStart + KeepWidth / 2), Y(l, -12), ItemID.WeaponRack);
+            Place(X(l, KeepStart + KeepWidth / 2), Y(l, -KeepHeight), ItemID.ChainLantern);
+            PlaceSingle(X(l, KeepStart + 2), Y(l, -10), ItemID.Torch);
+            PlaceSingle(X(l, KeepStart + KeepWidth - 2), Y(l, -10), ItemID.Torch);
         }
 
         private static void HallDetails(HoldLayout l)
         {
             int[] pots = { ItemID.PottedLavaPlantPalm, ItemID.PottedLavaPlantBush, ItemID.PottedLavaPlantBramble, ItemID.PottedLavaPlantBulb, ItemID.PottedLavaPlantTendrils };
-            int bay = 0;
-            for (int p = HallStart; p < HallEnd; p += HallPillarSpacing, bay++)
+            int bays = HallWidth / PillarSpacing;
+
+            // Walk-through pillars: dark shaft with a wider base and capital.
+            for (int k = 1; k < bays; k++)
             {
-                // Pillar (walk-through): dark shaft with a wider base and capital.
-                if (p > HallStart)
+                int p = HallStart + k * PillarSpacing;
+                int top = -HallHeight + GableDepth;
+                for (int u = p - PillarHalfWidth - 1; u <= p + PillarHalfWidth + 1; u++)
                 {
-                    Pillar(l, p);
+                    for (int v = top; v < 0; v++)
+                    {
+                        bool shaft = Math.Abs(u - p) <= PillarHalfWidth;
+                        bool foot = v >= -2 || v < top + 2;
+                        if ((shaft || foot) && ZoneAt(u, v) == DwarvenHold.GreatHall)
+                        {
+                            SetWall(X(l, u), Y(l, v), pillarWall);
+                        }
+                    }
                 }
+            }
 
-                int mid = p + HallPillarSpacing / 2;
-                if (mid >= HallEnd - 3)
-                {
-                    break;
-                }
-                bool nearShaft = mid >= Shaft1Start - 4 && mid <= Shaft1Start + ShaftWidth + 4;
-
-                // Tall framed window in the middle of the bay, a lantern hanging from the gable's peak.
-                Window(l, mid);
+            for (int b = 0; b < bays; b++)
+            {
+                int mid = HallStart + b * PillarSpacing + PillarSpacing / 2;
                 Place(X(l, mid), Y(l, -HallHeight), ItemID.ChainLantern);
-
-                if (!nearShaft)
+                if (Math.Abs(mid - Axis) <= 1)
                 {
-                    // Potted lava plants either side of the window.
-                    Place(X(l, mid - 4), Y(l, -1), pots[bay % pots.Length]);
-                    Place(X(l, mid + 4), Y(l, -1), pots[(bay + 2) % pots.Length]);
-                    if (bay % 3 == 1)
+                    // Lift bay: a cog frame around the shaft opening.
+                    for (int u = Axis - 6; u < Axis + 6; u++)
                     {
-                        Place(X(l, p + 5), Y(l, -1), ItemID.Keg);
-                        Place(X(l, p + HallPillarSpacing - 5), Y(l, -1), ItemID.Barrel);
+                        for (int v = -18; v < 0; v++)
+                        {
+                            bool frame = u < Axis - LiftWidth / 2 || u >= Axis + LiftWidth / 2 || v < -14;
+                            if (frame && ZoneAt(u, v) == DwarvenHold.GreatHall)
+                            {
+                                SetWall(X(l, u), Y(l, v), cogWall);
+                            }
+                        }
+                    }
+                    continue;
+                }
+                // Tall framed window, potted lava plants either side, kegs and barrels in some bays.
+                for (int u = mid - 2; u <= mid + 1; u++)
+                {
+                    for (int v = -19; v <= -4; v++)
+                    {
+                        bool frame = u == mid - 2 || u == mid + 1 || v == -19 || v == -4;
+                        SetWall(X(l, u), Y(l, v), frame ? pillarWall : windowWall);
                     }
                 }
-            }
-
-            ShaftPlatforms(l, Shaft1Start, 0, ForgeTop);
-        }
-
-        private static void Pillar(HoldLayout l, int p)
-        {
-            int top = -HallHeight + HallGableDepth;
-            for (int u = p - PillarHalfWidth - 1; u <= p + PillarHalfWidth + 1; u++)
-            {
-                bool shaft = Math.Abs(u - p) <= PillarHalfWidth;
-                for (int v = top; v < 0; v++)
+                Place(X(l, mid - 4), Y(l, -1), pots[b % pots.Length]);
+                Place(X(l, mid + 4), Y(l, -1), pots[(b + 2) % pots.Length]);
+                if (b % 3 == 0)
                 {
-                    bool foot = v >= -2 || v < top + 2; // wider base and capital
-                    if ((shaft || foot) && ZoneAt(u, v) == DwarvenHold.GreatHall)
-                    {
-                        SetWall(X(l, u), Y(l, v), pillarWall);
-                    }
+                    Place(X(l, mid - 8), Y(l, -1), ItemID.Keg);
+                    Place(X(l, mid + 8), Y(l, -1), ItemID.Barrel);
                 }
             }
-        }
 
-        private static void Window(HoldLayout l, int mid)
-        {
-            int bottom = -4, top = bottom - WindowHeight;
-            for (int u = mid - 2; u <= mid + 1; u++)
+            // Lift platforms from the hall floor down to the landing above the crucible.
+            for (int v = 0; v <= Landing; v += 5)
             {
-                for (int v = top - 1; v <= bottom; v++)
-                {
-                    bool frame = u == mid - 2 || u == mid + 1 || v == top - 1 || v == bottom;
-                    SetWall(X(l, u), Y(l, v), frame ? pillarWall : windowWall);
-                }
+                Platforms(l, Axis - LiftWidth / 2, Axis + LiftWidth / 2, v);
             }
+            Platforms(l, Axis - LiftWidth / 2 - 2, Axis + LiftWidth / 2 + 2, Landing);
         }
 
         private static void ForgeDetails(HoldLayout l)
         {
-            List<(int a, int b)> bays = ForgeBays();
-            int centre = bays.Count / 2;
-            for (int i = 0; i < bays.Count; i++)
+            // Cog panel behind the lift column.
+            for (int u = Axis - 7; u < Axis + 7; u++)
             {
-                (int a, int b) = bays[i];
-                int mid = (a + b) / 2;
-                bool hasShaft = a <= Shaft2Start + ShaftWidth && b >= Shaft2Start;
-
-                // Steam pipes up the back wall at both ends of the bay.
-                foreach (int pu in new[] { a + 1, b - 2 })
-                {
-                    for (int v = ForgeTop; v < ForgeFloor; v++)
-                    {
-                        if (ZoneAt(pu, v) == DwarvenHold.Forges && ZoneAt(pu + 1, v) == DwarvenHold.Forges)
-                        {
-                            SetWall(X(l, pu), Y(l, v), pipeWall);
-                            SetWall(X(l, pu + 1), Y(l, v), pipeWall);
-                        }
-                    }
-                }
-                foreach (int lu in new[] { a + 7, b - 7 })
-                {
-                    Place(X(l, lu), Y(l, ForgeTop + ForgeVaultDepthAt(lu)), ItemID.ChainLantern);
-                }
-
-                if (hasShaft)
-                {
-                    continue;
-                }
-                if (i == centre)
-                {
-                    Crucible(l, mid);
-                }
-                else
-                {
-                    switch (i % 3)
-                    {
-                        case 0:
-                            Furnace(l, mid - 8, SmallFurnaceWidth, SmallFurnaceHeight, true);
-                            Place(X(l, mid + 4), Y(l, ForgeFloor - 1), ItemID.Hellforge);
-                            Place(X(l, mid + 9), Y(l, ForgeFloor - 1), ItemID.IronAnvil);
-                            break;
-                        case 1:
-                            WaterTank(l, mid - 10);
-                            Place(X(l, mid + 4), Y(l, ForgeFloor - 1), ItemID.HeavyWorkBench);
-                            Place(X(l, mid + 9), Y(l, ForgeFloor - 1), ItemID.Extractinator);
-                            break;
-                        default:
-                            OreBuckets(l, a, b);
-                            Place(X(l, mid - 6), Y(l, ForgeFloor - 1), ItemID.Furnace);
-                            Place(X(l, mid + 6), Y(l, ForgeFloor - 1), ItemID.Barrel);
-                            break;
-                    }
-                }
-            }
-
-            ShaftPlatforms(l, Shaft2Start, ForgeFloor, MineTop);
-        }
-
-        // Centrepiece: a crucible pouring a molten stream into a floor pool between two big furnace banks,
-        // in front of a cog panel.
-        private static void Crucible(HoldLayout l, int c)
-        {
-            for (int u = c - 6; u <= c + 6; u++)
-            {
-                for (int v = ForgeTop + 1; v < ForgeTop + 10; v++)
+                for (int v = ForgeTop; v < Landing; v++)
                 {
                     if (ZoneAt(u, v) == DwarvenHold.Forges)
                     {
@@ -721,14 +725,13 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 }
             }
 
-            int cupV = ForgeTop + 7; // bottom row of the crucible
-            for (int u = c - CrucibleHalfWidth; u <= c + CrucibleHalfWidth; u++)
+            // Crucible pouring a molten stream into a floor pool.
+            for (int u = Axis - CrucibleHalfWidth; u <= Axis + CrucibleHalfWidth; u++)
             {
-                SetTile(X(l, u), Y(l, cupV), foundryBrick);
-                bool side = Math.Abs(u - c) == CrucibleHalfWidth;
-                for (int v = cupV - 2; v < cupV; v++)
+                SetTile(X(l, u), Y(l, CrucibleBottom), foundryBrick);
+                for (int v = CrucibleBottom - 2; v < CrucibleBottom; v++)
                 {
-                    if (side)
+                    if (Math.Abs(u - Axis) == CrucibleHalfWidth)
                     {
                         SetTile(X(l, u), Y(l, v), foundryBrick);
                     }
@@ -738,36 +741,113 @@ namespace Reign_of_the_Ancients.WorldGeneration
                     }
                 }
             }
-            for (int v = cupV + 1; v < ForgeFloor; v++)
+            for (int v = CrucibleBottom + 1; v < ForgeFloor; v++)
             {
-                SetWall(X(l, c), Y(l, v), streamWall);
+                SetWall(X(l, Axis), Y(l, v), streamWall);
             }
-            for (int u = c - 2; u <= c + 2; u++)
+            for (int u = Axis - 2; u <= Axis + 2; u++)
             {
                 Lava(X(l, u), Y(l, ForgeFloor));
             }
 
-            Furnace(l, c - 4 - BigFurnaceWidth, BigFurnaceWidth, BigFurnaceHeight, false);
-            Furnace(l, c + 4, BigFurnaceWidth, BigFurnaceHeight, false);
+            // Symmetric machinery: big furnace banks, smaller furnaces with smokestacks, cooling tanks near the walls.
+            Furnace(l, Axis - 4 - BigFurnaceWidth, BigFurnaceWidth, BigFurnaceHeight, false);
+            Furnace(l, Axis + 5, BigFurnaceWidth, BigFurnaceHeight, false);
+            Furnace(l, Axis - 30, SmallFurnaceWidth, SmallFurnaceHeight, true);
+            Furnace(l, Axis + 24, SmallFurnaceWidth, SmallFurnaceHeight, true);
+            WaterTank(l, Axis - 50);
+            WaterTank(l, Axis + 42);
+
+            // Ore carts hanging on chains, lanterns along the ceiling steps.
+            foreach (int off in new[] { -40, -18, 18, 40 })
+            {
+                int u = Axis + off, top = ForgeCeiling(u);
+                for (int v = top; v < top + 6; v++)
+                {
+                    SetTile(X(l, u), Y(l, v), TileID.Chain);
+                }
+                Platforms(l, u - 1, u + 2, top + 6);
+                SetTile(X(l, u), Y(l, top + 5), WorldGen.genRand.NextBool() ? TileID.Gold : TileID.Iron);
+            }
+            for (int off = -ForgeWidth / 2 + 6; off < ForgeWidth / 2 - 4; off += 12)
+            {
+                if (Math.Abs(off) > 8)
+                {
+                    int u = Axis + off;
+                    Place(X(l, u), Y(l, ForgeCeiling(u)), ItemID.ChainLantern);
+                }
+            }
         }
 
-        // A brick furnace block standing on the forge floor, with a grid of fire windows (living fire blocks).
+        private static void WorkshopDetails(HoldLayout l)
+        {
+            int floor = ForgeFloor - 1;
+            int[][] stations =
+            {
+                new int[] { ItemID.Hellforge, ItemID.IronAnvil, ItemID.HeavyWorkBench, ItemID.Keg },
+                new int[] { ItemID.Extractinator, ItemID.Sawmill, ItemID.Furnace, ItemID.Barrel },
+            };
+            int[] starts = { WestShopStart, EastShopStart };
+            int[] shafts = { WestShaft, EastShaft };
+            for (int w = 0; w < 2; w++)
+            {
+                int start = starts[w];
+                int s = 0;
+                for (int u = start + 3; u < start + WorkshopWidth - 4 && s < stations[w].Length; u += 8)
+                {
+                    if (u + 3 >= shafts[w] - 1 && u <= shafts[w] + 8)
+                    {
+                        continue; // keep the shaft clear
+                    }
+                    Place(X(l, u + 1), Y(l, floor), stations[w][s++]);
+                }
+                foreach (int pu in new[] { start + 1, start + WorkshopWidth - 2 })
+                {
+                    for (int v = ForgeFloor - WorkshopHeight; v < ForgeFloor; v++)
+                    {
+                        SetWall(X(l, pu), Y(l, v), pipeWall);
+                    }
+                }
+                Place(X(l, start + WorkshopWidth / 2), Y(l, ForgeFloor - WorkshopHeight), ItemID.ChainLantern);
+                Place(X(l, start + WorkshopWidth / 2), Y(l, ForgeFloor - 8), ItemID.WeaponRack);
+
+                for (int v = ForgeFloor; v < MineTop; v += 5)
+                {
+                    Platforms(l, shafts[w], shafts[w] + 8, v);
+                }
+            }
+
+            // Treasury vault: gold brick walls, coin piles, a lantern. (Its chests come with the hold loot.)
+            for (int u = TreasuryStart; u < TreasuryStart + TreasuryWidth; u++)
+            {
+                for (int v = ForgeFloor - TreasuryHeight; v < ForgeFloor; v++)
+                {
+                    SetWall(X(l, u), Y(l, v), treasuryWall);
+                }
+            }
+            for (int u = TreasuryStart + 7; u < TreasuryStart + 13; u++)
+            {
+                PlaceSingle(X(l, u), Y(l, floor), u % 2 == 0 ? ItemID.GoldCoin : ItemID.SilverCoin);
+            }
+            Place(X(l, TreasuryStart + TreasuryWidth / 2), Y(l, ForgeFloor - TreasuryHeight), ItemID.ChainLantern);
+        }
+
+        // A brick block standing on the forge floor with a grid of fire windows (living fire blocks).
         private static void Furnace(HoldLayout l, int left, int width, int height, bool smokestack)
         {
-            int floor = ForgeFloor;
             for (int u = left; u < left + width; u++)
             {
-                for (int v = floor - height; v < floor; v++)
+                for (int v = ForgeFloor - height; v < ForgeFloor; v++)
                 {
-                    int du = u - left, dv = v - (floor - height);
+                    int du = u - left, dv = v - (ForgeFloor - height);
                     bool window = du % 2 == 1 && dv % 2 == 1 && du < width - 1 && dv < height - 1;
                     SetTile(X(l, u), Y(l, v), window ? TileID.LivingFire : foundryBrick);
                 }
             }
             if (smokestack)
             {
-                int su = left + width / 2;
-                for (int v = floor - height - SmokestackHeight; v < floor - height; v++)
+                int su = left + width / 2 - 1;
+                for (int v = ForgeFloor - height - SmokestackHeight; v < ForgeFloor - height; v++)
                 {
                     SetTile(X(l, su), Y(l, v), foundryBrick);
                     SetTile(X(l, su + 1), Y(l, v), foundryBrick);
@@ -775,15 +855,14 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        // Glass cooling tank filled with water, with pipes running up to the ceiling.
+        // Glass cooling tank full of water, with pipes running up to the ceiling.
         private static void WaterTank(HoldLayout l, int left)
         {
-            int floor = ForgeFloor;
             for (int u = left; u < left + TankWidth; u++)
             {
-                for (int v = floor - TankHeight; v < floor; v++)
+                for (int v = ForgeFloor - TankHeight; v < ForgeFloor; v++)
                 {
-                    bool shell = u == left || u == left + TankWidth - 1 || v == floor - TankHeight || v == floor - 1;
+                    bool shell = u == left || u == left + TankWidth - 1 || v == ForgeFloor - TankHeight || v == ForgeFloor - 1;
                     if (shell)
                     {
                         SetTile(X(l, u), Y(l, v), TileID.Glass);
@@ -793,13 +872,13 @@ namespace Reign_of_the_Ancients.WorldGeneration
                         Tile t = Main.tile[X(l, u), Y(l, v)];
                         t.ClearTile();
                         t.LiquidType = LiquidID.Water;
-                        t.LiquidAmount = (byte)(v == floor - TankHeight + 1 ? 128 : 255);
+                        t.LiquidAmount = (byte)(v == ForgeFloor - TankHeight + 1 ? 140 : 255);
                     }
                 }
             }
             foreach (int pu in new[] { left + 2, left + TankWidth - 3 })
             {
-                for (int v = ForgeTop; v < floor - TankHeight; v++)
+                for (int v = ForgeTop; v < ForgeFloor - TankHeight; v++)
                 {
                     if (ZoneAt(pu, v) == DwarvenHold.Forges)
                     {
@@ -809,122 +888,160 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
         }
 
-        // Ore buckets hanging on chains across the bay.
-        private static void OreBuckets(HoldLayout l, int a, int b)
+        private static void MineDetails(HoldLayout l)
         {
-            int hangV = ForgeTop + ForgeVaultDepth + 4;
-            for (int u = a + 6; u + 2 < b - 4; u += 8)
+            // Rail track and timber supports in both tunnels.
+            Track(l, 1, MineEnd - 1, MineFloor - 1);
+            Track(l, LowerTunnelStart + 1, LowerTunnelEnd - 1, LowerTunnelFloor - 1);
+            Supports(l, 4, MineEnd - 4, MineTop, MineFloor);
+            Supports(l, LowerTunnelStart + 4, LowerTunnelEnd - 4, LowerTunnelTop, LowerTunnelFloor);
+
+            // Wooden scaffolding inside each cavern: two decks on posts.
+            foreach (var c in Caverns)
             {
-                for (int v = ForgeTop; v < hangV; v++)
+                foreach (int deck in new[] { c.v - 2, c.v + 5 })
                 {
-                    if (ZoneAt(u + 1, v) == DwarvenHold.Forges && !Main.tile[X(l, u + 1), Y(l, v)].HasTile)
+                    int u0 = c.u - c.rx / 2 + WorldGen.genRand.Next(-3, 4);
+                    for (int u = u0; u < u0 + c.rx; u++)
                     {
-                        SetTile(X(l, u + 1), Y(l, v), TileID.Chain);
+                        if (ZoneAt(u, deck) == DwarvenHold.Mines && !Main.tile[X(l, u), Y(l, deck)].HasTile)
+                        {
+                            SetTile(X(l, u), Y(l, deck), TileID.Platforms);
+                        }
+                    }
+                    for (int u = u0; u < u0 + c.rx; u += 6)
+                    {
+                        for (int v = deck + 1; ZoneAt(u, v) == DwarvenHold.Mines && v < VMax - 1 && !Main.tile[X(l, u), Y(l, v)].HasTile; v++)
+                        {
+                            SetTile(X(l, u), Y(l, v), TileID.WoodenBeam);
+                        }
+                    }
+                    PlaceSingle(X(l, u0 + 2), Y(l, deck - 1), ItemID.Torch);
+                }
+            }
+
+            // Ore veins showing in the tunnel walls.
+            int[] ores = { TileID.Iron, TileID.Lead, TileID.Silver, TileID.Tungsten, TileID.Gold, TileID.Platinum };
+            for (int u = UMin; u < UMax; u++)
+            {
+                for (int v = VMin; v < VMax; v++)
+                {
+                    if (LiningAt(u, v) != DwarvenHold.Mines || dist[u - UMin, v - VMin] != 1 || WorldGen.genRand.NextFloat() >= OreVeinChance)
+                    {
+                        continue;
+                    }
+                    int ore = WorldGen.genRand.Next(ores);
+                    for (int a = u - 1; a <= u + 1; a++)
+                    {
+                        for (int b = v - 1; b <= v + 1; b++)
+                        {
+                            Tile t = Main.tile[X(l, a), Y(l, b)];
+                            if (LiningAt(a, b) == DwarvenHold.Mines && t.HasTile && t.TileType == mineRock && WorldGen.genRand.NextFloat() < 0.6f)
+                            {
+                                t.TileType = (ushort)ore;
+                            }
+                        }
                     }
                 }
-                for (int k = 0; k < 3; k++)
-                {
-                    SetTile(X(l, u + k), Y(l, hangV), TileID.Platforms);
-                }
-                SetTile(X(l, u + 1), Y(l, hangV - 1), WorldGen.genRand.NextBool() ? TileID.Gold : TileID.Iron);
             }
         }
 
-        private static void MineDetails(HoldLayout l)
+        private static void Track(HoldLayout l, int u0, int u1, int row)
         {
-            int railRow = Y(l, MineFloor - 1);
-            for (int u = MineStart + 1; u < MineEnd - 1; u++)
+            for (int u = u0; u < u1; u++)
             {
-                WorldGen.PlaceTile(X(l, u), railRow, TileID.MinecartTrack, true, true);
+                WorldGen.PlaceTile(X(l, u), Y(l, row), TileID.MinecartTrack, true, true);
             }
+        }
 
+        // Timber posts across a tunnel, skipping spots where something opens above or below; a torch on every other one.
+        private static void Supports(HoldLayout l, int u0, int u1, int top, int floor)
+        {
             int n = 0;
-            for (int u = MineStart + 4; u < MineEnd - 4; u += MineBeamSpacing, n++)
+            for (int u = u0; u < u1; u += BeamSpacing)
             {
-                if (u >= Shaft2Start - 2 && u <= Shaft2Start + ShaftWidth + 1)
+                if (ZoneAt(u, top - 1) != 0 || ZoneAt(u, floor) != 0)
                 {
                     continue;
                 }
-                for (int v = MineTop; v < MineFloor - 1; v++)
+                for (int v = top; v < floor - 1; v++)
                 {
                     SetTile(X(l, u), Y(l, v), TileID.WoodenBeam);
                 }
-                if (n % 2 == 0)
+                if (n++ % 2 == 0)
                 {
-                    PlaceSingle(X(l, u + 1), Y(l, MineTop + 3), ItemID.Torch);
+                    PlaceSingle(X(l, u + 1), Y(l, top + 3), ItemID.Torch);
                 }
             }
         }
 
         private static void FoundryDetails(HoldLayout l)
         {
-            int floorV = MineFloor;
-
-            // Lava aqueduct near the ceiling, held in a brick trough, with molten seams glowing below it.
-            int troughV = floorV - TroughHeightAboveFloor;
-            int ta = FoundryStart + TroughInset, tb = FoundryEnd - TroughInset;
-            for (int u = ta; u <= tb; u++)
+            // Giant piston columns with brass bands.
+            foreach (int off in new[] { -2, -1, 1, 2 })
             {
-                SetTile(X(l, u), Y(l, troughV), foundryBrick);
-                bool side = u == ta || u == tb;
-                for (int v = troughV - 2; v < troughV; v++)
+                int p = FoundryAxis + off * FoundryPillarSpacing;
+                for (int u = p - 2; u <= p + 2; u++)
                 {
-                    if (side)
+                    for (int v = FoundryTop; v < MineFloor; v++)
                     {
-                        SetTile(X(l, u), Y(l, v), foundryBrick);
-                    }
-                    else
-                    {
-                        Lava(X(l, u), Y(l, v));
+                        if (ZoneAt(u, v) == DwarvenHold.Foundry)
+                        {
+                            SetWall(X(l, u), Y(l, v), (v - FoundryTop) % 8 == 0 ? foundryBandWall : foundryPillarWall);
+                        }
                     }
                 }
             }
-            for (int u = ta + MoltenFallSpacing / 2; u < tb; u += MoltenFallSpacing)
-            {
-                for (int v = troughV + 1; v < floorV; v++)
-                {
-                    SetWall(X(l, u), Y(l, v), moltenWall);
-                    SetWall(X(l, u + 1), Y(l, v), moltenWall);
-                }
-            }
 
-            // Lava channel along the far wall.
-            for (int u = FoundryEnd - FarPitWidth; u < FoundryEnd; u++)
+            // Molten fall pouring down the far wall into a lava channel.
+            for (int u = FoundryEnd - FarChannelWidth; u < FoundryEnd; u++)
             {
-                for (int v = floorV; v < floorV + 2; v++)
+                for (int v = MineFloor; v < MineFloor + 2; v++)
                 {
                     Lava(X(l, u), Y(l, v));
                 }
             }
-
-            // Chains hanging from the ceiling.
-            for (int u = FoundryStart + 8; u < FoundryEnd - 8; u += WorldGen.genRand.Next(7, 13))
+            for (int u = FoundryEnd - 4; u <= FoundryEnd - 3; u++)
             {
-                int length = WorldGen.genRand.Next(3, 9);
-                for (int v = FoundryTop; v < FoundryTop + length; v++)
+                for (int v = FoundryTop; v < MineFloor; v++)
                 {
-                    if (!Main.tile[X(l, u), Y(l, v)].HasTile)
+                    if (ZoneAt(u, v) == DwarvenHold.Foundry)
                     {
-                        SetTile(X(l, u), Y(l, v), TileID.Chain);
+                        SetWall(X(l, u), Y(l, v), moltenWall);
                     }
                 }
             }
 
-            // The Titan control machine just inside the entrance, and a pair of big furnace banks behind it.
+            // Stepped dais with the Titan control machine on top, just inside the entrance.
+            for (int i = 0; i < DaisTiers; i++)
+            {
+                for (int u = FoundryStart + 4 + i; u < FoundryStart + 14 - i; u++)
+                {
+                    SetTile(X(l, u), Y(l, MineFloor - 1 - i), foundryBrick);
+                }
+            }
             WorldGen.PlaceObject(l.Machine.X + 1, l.Machine.Y + 2, ModContent.TileType<TitanControlMachine>(), true);
-            PlaceSingle(X(l, FoundryStart + 2), Y(l, floorV - 6), ItemID.Torch);
-            PlaceSingle(X(l, FoundryStart + 24), Y(l, floorV - 6), ItemID.Torch);
+
+            // Chains and lanterns hanging from the stepped ceiling.
+            for (int u = FoundryStart + 20; u < FoundryEnd - 10; u += 9)
+            {
+                int top = FoundryCeiling(u), length = WorldGen.genRand.Next(3, 9);
+                for (int v = top; v < top + length; v++)
+                {
+                    SetTile(X(l, u), Y(l, v), TileID.Chain);
+                }
+            }
+            for (int u = FoundryStart + 16; u < FoundryEnd - 8; u += 18)
+            {
+                Place(X(l, u), Y(l, FoundryCeiling(u)), ItemID.ChainLantern);
+            }
         }
 
-        // Wooden platforms across a shaft: one flush with the upper floor, then one every few rows.
-        private static void ShaftPlatforms(HoldLayout l, int start, int topV, int bottomV)
+        private static void Platforms(HoldLayout l, int u0, int u1, int v)
         {
-            for (int v = topV; v < bottomV; v += ShaftPlatformEvery)
+            for (int u = u0; u < u1; u++)
             {
-                for (int u = start; u < start + ShaftWidth; u++)
-                {
-                    SetTile(X(l, u), Y(l, v), TileID.Platforms);
-                }
+                SetTile(X(l, u), Y(l, v), TileID.Platforms);
             }
         }
 
