@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Tiles.DwarvenHold;
 using Reign_of_the_Ancients.Tiles.Library;
 using Terraria;
@@ -32,6 +33,10 @@ namespace Reign_of_the_Ancients.NPCs.Dwarves
         private ref float Timer => ref NPC.ai[1];
         private ref float DigTimer => ref NPC.ai[2];
         private ref float SwingCooldown => ref NPC.ai[3];
+
+        protected override int BannerItemType => ModContent.ItemType<DwarfMinerBanner>();
+
+        protected override bool ShowAttackFrame => State == StateWindup || State == StateLunge;
 
         protected override float SpawnWeight(int zone) => zone == DwarvenHold.Mines ? 1.2f : 0f;
 

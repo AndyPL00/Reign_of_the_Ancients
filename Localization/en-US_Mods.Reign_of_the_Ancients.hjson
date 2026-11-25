@@ -21,6 +21,10 @@ NPCs: {
 
 # Placeholder: Andy writes the lore.
 Bestiary.Volodar: "[Placeholder bestiary entry for Volodar.]"
+Bestiary.DwarfSapper: "[Placeholder bestiary entry for the Corrupted Sapper.]"
+Bestiary.DwarfGunner: "[Placeholder bestiary entry for the Corrupted Gunner.]"
+Bestiary.DwarfMiner: "[Placeholder bestiary entry for the Corrupted Miner.]"
+Bestiary.DwarfMechPilot: "[Placeholder bestiary entry for the Rusted Mech Pilot.]"
 BossChecklist.Volodar.SpawnInfo: Use a [i:Reign_of_the_Ancients/SealedTome] Sealed Tome in the throne room of the Mystical Library.
 
 Projectiles: {
@@ -318,6 +322,26 @@ Items: {
 	}
 
 	# ---- Enemy banners ----
+	DwarfSapperBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.DwarfSapper.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.DwarfSapper.DisplayName}"
+	}
+
+	DwarfGunnerBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.DwarfGunner.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.DwarfGunner.DisplayName}"
+	}
+
+	DwarfMinerBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.DwarfMiner.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.DwarfMiner.DisplayName}"
+	}
+
+	DwarfMechPilotBanner: {
+		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.DwarfMechPilot.DisplayName} Banner"
+		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.DwarfMechPilot.DisplayName}"
+	}
+
 	ElvenApprenticeBanner: {
 		DisplayName: "{$Mods.Reign_of_the_Ancients.NPCs.ElvenApprentice.DisplayName} Banner"
 		Tooltip: "{$CommonItemTooltip.BannerBonus}{$Mods.Reign_of_the_Ancients.NPCs.ElvenApprentice.DisplayName}"

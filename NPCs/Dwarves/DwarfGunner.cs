@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework;
 using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Common.Visuals;
+using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Projectiles.Dwarves;
 using Terraria;
 using Terraria.Audio;
@@ -26,8 +28,27 @@ namespace Reign_of_the_Ancients.NPCs.Dwarves
         private const float StateMove = 0f;
         private const float StateAim = 1f;
 
+        private const float AimLineLength = 9 * 16f;
+        private static readonly Color AimLineColor = new Color(255, 150, 60);
+
         private ref float State => ref NPC.ai[0];
         private ref float Timer => ref NPC.ai[1];
+
+        protected override int BannerItemType => ModContent.ItemType<DwarfGunnerBanner>();
+
+        protected override bool ShowAttackFrame => State == StateAim;
+
+        // Thin aiming line from the muzzle that brightens as it is about to fire.
+        protected override void DrawTelegraphs()
+        {
+            if (State != StateAim || NPC.target == 255)
+            {
+                return;
+            }
+            Vector2 muzzle = Muzzle();
+            float angle = (Target.Center - muzzle).ToRotation();
+            BeamRenderer.DrawTelegraph(muzzle, angle, AimLineLength, 0.8f, AimLineColor, Timer / AimTicks, 0.8f);
+        }
 
         protected override float SpawnWeight(int zone) => zone switch
         {

@@ -1,6 +1,8 @@
 using System;
 using Microsoft.Xna.Framework;
 using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Common.Visuals;
+using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Projectiles.Dwarves;
 using Terraria;
 using Terraria.Audio;
@@ -40,6 +42,46 @@ namespace Reign_of_the_Ancients.NPCs.Dwarves
         private ref float State => ref NPC.ai[0];
         private ref float Timer => ref NPC.ai[1];
         private ref float ChargeCooldown => ref NPC.ai[2];
+
+        private static readonly Color ChargeLineColor = new Color(255, 80, 50);
+
+        protected override int BannerItemType => ModContent.ItemType<DwarfMechPilotBanner>();
+        protected override bool HasAttackFrame => false;
+        protected override int HitDust => DustID.Torch;
+        protected override int DeathDustAmount => 40;
+
+        // Red line along the charge path while it winds up.
+        protected override void DrawTelegraphs()
+        {
+            if (State != StateWindup)
+            {
+                return;
+            }
+            Vector2 start = NPC.Center + new Vector2(NPC.direction * NPC.width / 2f, 8f);
+            float angle = NPC.direction > 0 ? 0f : MathHelper.Pi;
+            BeamRenderer.DrawTelegraph(start, angle, ChargeSpeed * ChargeTicks * 0.6f, 1.6f, ChargeLineColor, Timer / ChargeWindupTicks);
+        }
+
+        // The old mech bursts apart: fire, smoke and a bang.
+        protected override void OnDeathEffects()
+        {
+            SoundEngine.PlaySound(SoundID.Item14, NPC.Center);
+            for (int i = 0; i < 30; i++)
+            {
+                Dust smoke = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.Smoke, 0f, 0f, 100, default, 2f);
+                smoke.velocity *= 2f;
+                Dust fire = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.Torch, 0f, 0f, 100, default, 2.5f);
+                fire.noGravity = true;
+                fire.velocity *= 3f;
+            }
+            if (!Main.dedServ)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    Gore.NewGore(NPC.GetSource_Death(), NPC.Center - new Vector2(16f), Main.rand.NextVector2Circular(3f, 3f), GoreID.Smoke1 + Main.rand.Next(3));
+                }
+            }
+        }
 
         protected override float SpawnWeight(int zone) => zone switch
         {

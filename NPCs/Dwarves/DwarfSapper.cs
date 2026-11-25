@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Reign_of_the_Ancients.Biomes;
+using Reign_of_the_Ancients.Items.Placeable.Banners;
 using Reign_of_the_Ancients.Projectiles.Dwarves;
 using Terraria;
 using Terraria.ID;
@@ -30,8 +31,16 @@ namespace Reign_of_the_Ancients.NPCs.Dwarves
         private const float StateNormal = 0f;
         private const float StateKamikaze = 1f;
 
+        private const int ThrowPoseTicks = 14;          // arm raised before and just after a throw
+
         private ref float State => ref NPC.ai[0];
         private ref float Timer => ref NPC.ai[1];
+        private ref float HasThrown => ref NPC.localAI[0];
+
+        protected override int BannerItemType => ModContent.ItemType<DwarfSapperBanner>();
+
+        protected override bool ShowAttackFrame => State == StateNormal && NPC.target != 255
+            && ((Timer > ThrowInterval - ThrowPoseTicks && CanSeeTarget && DistToTarget < ThrowRange) || (HasThrown == 1f && Timer < ThrowPoseTicks / 2));
 
         protected override float SpawnWeight(int zone) => zone switch
         {
@@ -93,6 +102,7 @@ namespace Reign_of_the_Ancients.NPCs.Dwarves
                 if (Timer >= ThrowInterval && dist < ThrowRange && CanSeeTarget)
                 {
                     Timer = 0f;
+                    HasThrown = 1f;
                     if (IsServer)
                     {
                         ThrowBomb();
