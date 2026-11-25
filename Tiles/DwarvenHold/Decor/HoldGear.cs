@@ -16,7 +16,7 @@ namespace Reign_of_the_Ancients.Tiles.DwarvenHold.Decor
         private const float ToothSpeed = 9f; // pixels per second along the pitch circle
 
         // Pitch radius in pixels for each size (matches the generated textures: outer radius minus half a tooth).
-        public static readonly float[] PitchRadius = { 28.5f, 44f, 60f, 91f };
+        public static readonly float[] PitchRadius = { 26.5f, 42f, 57.5f, 88.5f };
         private static readonly string[] SizeNames = { "Small", "Medium", "Large", "Huge" };
         private static Asset<Texture2D>[] gearTextures;
 

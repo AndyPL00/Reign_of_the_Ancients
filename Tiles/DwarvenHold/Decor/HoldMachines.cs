@@ -8,18 +8,19 @@ using Terraria.ModLoader;
 
 namespace Reign_of_the_Ancients.Tiles.DwarvenHold.Decor
 {
-    // Riveted iron boiler with a glowing firebox: the main warm light in the forge and the foundry.
-    // Steam puffs from its side valve now and then; embers drift out of the grate.
+    // Horizontal copper boiler on an iron sled, with smokestacks, a steam dome (pipe outlet, columns 3-4), gauges and
+    // a glowing firebox hatch: the main warm light in the forge and the foundry. Smoke puffs from the stacks;
+    // embers drift out of the grate.
     public class HoldBoiler : HoldDecorBase
     {
         private const int FrameCount = 3;
         private const int FrameTicks = 7;
-        private const int SteamChance = 90;   // 1 in N drawn frames
+        private const int SteamChance = 45;   // 1 in N drawn frames
         private const int EmberChance = 40;
         private static readonly Vector3 FireLight = new Vector3(1f, 0.5f, 0.15f);
 
-        public override int Width => 6;
-        public override int Height => 8;
+        public override int Width => 8;
+        public override int Height => 6;
         protected override Color MapColor => new Color(90, 88, 96);
         protected override int DecorDust => DustID.Iron;
 
@@ -38,11 +39,11 @@ namespace Reign_of_the_Ancients.Tiles.DwarvenHold.Decor
             }
         }
 
-        // The firebox grate (columns 2-3, rows 4-6) glows and flickers.
+        // The firebox hatch (columns 1-2, rows 3-4) glows and flickers.
         public override void ModifyLight(int i, int j, ref float r, ref float g, ref float b)
         {
             Point cell = CellOf(i, j);
-            if (cell.X < 2 || cell.X > 3 || cell.Y < 4 || cell.Y > 6)
+            if (cell.X < 1 || cell.X > 2 || cell.Y < 3 || cell.Y > 4)
             {
                 return;
             }
@@ -61,18 +62,20 @@ namespace Reign_of_the_Ancients.Tiles.DwarvenHold.Decor
             Vector2 topLeft = new Vector2(i * 16, j * 16);
             if (Main.rand.NextBool(SteamChance))
             {
-                Dust steam = Dust.NewDustPerfect(topLeft + new Vector2(6f, 64f), DustID.Smoke, new Vector2(Main.rand.NextFloat(-0.6f, 0.2f), -1.2f), 140, default, 1.3f);
-                steam.noGravity = true;
+                // Smoke from one of the two stacks (tall iron one at x 99, short copper one at x 31).
+                Vector2 stack = Main.rand.NextBool() ? new Vector2(99f, 2f) : new Vector2(31f, 10f);
+                Dust smoke = Dust.NewDustPerfect(topLeft + stack, DustID.Smoke, new Vector2(Main.rand.NextFloat(-0.3f, 0.3f), -1.4f), 120, default, 1.4f);
+                smoke.noGravity = true;
             }
             if (Main.rand.NextBool(EmberChance))
             {
-                Dust ember = Dust.NewDustPerfect(topLeft + new Vector2(Main.rand.NextFloat(34f, 62f), 78f), DustID.Torch, new Vector2(Main.rand.NextFloat(-0.4f, 0.4f), -0.8f), 100, default, 0.9f);
+                Dust ember = Dust.NewDustPerfect(topLeft + new Vector2(Main.rand.NextFloat(24f, 46f), 70f), DustID.Torch, new Vector2(Main.rand.NextFloat(-0.4f, 0.4f), -0.8f), 100, default, 0.9f);
                 ember.noGravity = true;
             }
         }
     }
 
-    // Copper pressure tank with glowing sight glasses and a gauge.
+    // Still-style copper tank on a stepped base, with two glowing portholes (row 4) and a gauge on its neck.
     public class HoldPressureTank : HoldDecorBase
     {
         private static readonly Vector3 GlassLight = new Vector3(0.28f, 0.13f, 0.03f);
@@ -89,7 +92,7 @@ namespace Reign_of_the_Ancients.Tiles.DwarvenHold.Decor
         public override void ModifyLight(int i, int j, ref float r, ref float g, ref float b)
         {
             Point cell = CellOf(i, j);
-            if ((cell.X == 1 || cell.X == 2) && (cell.Y == 2 || cell.Y == 4))
+            if ((cell.X == 1 || cell.X == 2) && cell.Y == 4)
             {
                 r = GlassLight.X;
                 g = GlassLight.Y;

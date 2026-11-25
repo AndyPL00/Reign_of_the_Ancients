@@ -751,11 +751,10 @@ namespace Reign_of_the_Ancients.WorldGeneration
             for (int s = -1; s <= 1; s += 2)
             {
                 // Boiler on the floor beside the pool, its steam pipe running out to a tank on a raised platform.
-                int boiler = SymStart(Axis, s, 7, 6);
-                Decor<HoldBoiler>(l, boiler, ForgeFloor - 8);
-                int boilerPipe = SymCell(Axis, s, 10);
+                Decor<HoldBoiler>(l, SymStart(Axis, s, 6, 8), ForgeFloor - 6);
+                int boilerPipe = SymCell(Axis, s, 9);   // over the boiler's steam dome
                 int tankPipe = SymCell(Axis, s, 23);
-                Pipe(l, (boilerPipe, ForgeFloor - 9), (boilerPipe, 26), (SymCell(Axis, s, 20), 26));
+                Pipe(l, (boilerPipe, ForgeFloor - 7), (boilerPipe, 26), (SymCell(Axis, s, 20), 26));
 
                 Scaffold(l, SymStart(Axis, s, 18, 13), 13, 28, DwarvenHold.Forges);
                 Decor<HoldPressureTank>(l, SymStart(Axis, s, 21, 4), 22);
@@ -763,16 +762,9 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 PipeVariant(l, tankPipe, 17, HoldPipe.Valve);
                 PipeVariant(l, tankPipe, 13, HoldPipe.Gauge);
 
-                // Toward the wall: a floor tank and a second boiler, linked, both piped up into the ceiling.
-                Decor<HoldPressureTank>(l, SymStart(Axis, s, 43, 4), ForgeFloor - 6);
-                Decor<HoldBoiler>(l, SymStart(Axis, s, 50, 6), ForgeFloor - 8);
-                int outerTankPipe = SymCell(Axis, s, 45);
-                int outerBoilerPipe = SymCell(Axis, s, 53);
-                Pipe(l, (outerTankPipe, ForgeFloor - 7), (outerTankPipe, ForgeCeiling(outerTankPipe)));
-                Pipe(l, (outerBoilerPipe, ForgeFloor - 9), (outerBoilerPipe, ForgeCeiling(outerBoilerPipe)));
-                Pipe(l, (SymCell(Axis, s, 47), ForgeFloor - 2), (SymCell(Axis, s, 49), ForgeFloor - 2));
-                PipeVariant(l, outerTankPipe, ForgeFloor - 11, HoldPipe.Gauge);
-                PipeVariant(l, outerBoilerPipe, ForgeFloor - 13, HoldPipe.Valve);
+                // Toward the wall: a cargo crane whose jib reaches in toward the middle, with its load hanging on a
+                // platform you can stand on.
+                Crane(l, s, Axis, 56, ForgeFloor, ForgeFloor - 5);
 
                 // Cargo on chains from the stepped ceiling, and a couple of lanterns (the boilers are the main light).
                 int cargoA = SymStart(Axis, s, 32, 3), cargoB = SymStart(Axis, s, 37, 3);
@@ -994,11 +986,11 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 // Between the piston columns: a walkable platform on wooden posts carrying a boiler and a tank.
                 const int deck = MineFloor - 12;
                 Scaffold(l, SymStart(FoundryAxis, s, 33, 19), 19, deck, DwarvenHold.Foundry);
-                Decor<HoldBoiler>(l, SymStart(FoundryAxis, s, 35, 6), deck - 8);
+                Decor<HoldBoiler>(l, SymStart(FoundryAxis, s, 34, 8), deck - 6);
                 Decor<HoldPressureTank>(l, SymStart(FoundryAxis, s, 45, 4), deck - 6);
-                int boilerPipe = SymCell(FoundryAxis, s, 38);
+                int boilerPipe = SymCell(FoundryAxis, s, 37);   // over the boiler's steam dome
                 int tankPipe = SymCell(FoundryAxis, s, 47);
-                Pipe(l, (boilerPipe, deck - 9), (boilerPipe, FoundryCeiling(boilerPipe)));
+                Pipe(l, (boilerPipe, deck - 7), (boilerPipe, FoundryCeiling(boilerPipe)));
                 Pipe(l, (tankPipe, deck - 7), (tankPipe, FoundryCeiling(tankPipe)));
                 Pipe(l, (SymCell(FoundryAxis, s, 41), deck - 2), (SymCell(FoundryAxis, s, 44), deck - 2));
                 PipeVariant(l, boilerPipe, deck - 15, HoldPipe.Valve);
@@ -1162,6 +1154,32 @@ namespace Reign_of_the_Ancients.WorldGeneration
             for (; ZoneAt(u, v) == zoneId && !Main.tile[X(l, u), Y(l, v)].HasTile; v++)
             {
                 SetTile(X(l, u), Y(l, v), TileID.WoodenBeam);
+            }
+        }
+
+        // Cargo crane standing on `floor` with its tower centred on the edge `towerEdge` tiles from the axis (mirrored
+        // by s) and its jib reaching back toward the axis. The load hangs on a rope from the jib tip and stands on a
+        // row of platforms at `loadPlatformRow`.
+        private static void Crane(HoldLayout l, int s, int axis, int towerEdge, int floor, int loadPlatformRow)
+        {
+            // Local edge -> world edge (the edge between local cells e-1 and e).
+            int edge = s > 0 ? axis + towerEdge : axis - towerEdge;
+            int worldEdge = l.Side > 0 ? l.GateX + edge : l.GateX - edge + 1;
+            bool jibLeftInWorld = s * l.Side > 0; // the jib points back toward the axis
+            int style = jibLeftInWorld ? HoldCrane.JibLeft : HoldCrane.JibRight;
+            int anchorX = worldEdge - 1, anchorY = Y(l, floor - 2);
+            HoldDecorBase.Place(anchorX, anchorY, ModContent.TileType<HoldCrane>(), 2, 2, style);
+
+            int ropeX = anchorX + HoldCrane.RopeOffsetX(style);
+            int loadTop = Y(l, loadPlatformRow - 3);
+            for (int y = anchorY + HoldCrane.RopeStartOffsetY; y < loadTop; y++)
+            {
+                SetTile(ropeX, y, TileID.Rope);
+            }
+            HoldDecorBase.Place(ropeX - 2, loadTop, ModContent.TileType<HoldCraneLoad>(), 5, 3);
+            for (int x = ropeX - 3; x <= ropeX + 3; x++)
+            {
+                SetTile(x, Y(l, loadPlatformRow), TileID.Platforms);
             }
         }
 
