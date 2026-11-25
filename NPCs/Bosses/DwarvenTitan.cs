@@ -21,6 +21,8 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
     // Two arm cannons (DwarvenTitanCannon) are separate, optional targets: destroying one removes its cannon
     // attacks and makes the Titan a little faster and angrier.
     // Phase 1 (plated, takes reduced damage): cannon barrage, ground slam shockwaves, tread ram, homing steam rockets.
+    // Phase 2 (below Phase2LifeRatio): the plates blast off and the glowing core is exposed (no more reduction, hits on
+    //   the core deal extra damage). Faster; double slams, more rockets; adds steam vents and a flamethrower sweep.
     //
     // Multiplayer: the server picks attacks and spawns projectiles; state lives in ai[] and syncs via netUpdate.
     [AutoloadBossHead]
@@ -32,6 +34,11 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         private const int ContactDamage = 40;
         private const int RamDamage = 60;
         private const float PlatedDamageTaken = 0.65f;   // phase 1: plates soak 35% of every hit
+        public const float Phase2LifeRatio = 0.6f;
+        private const float CoreDamageBonus = 1.5f;      // phase 2: hits on the exposed core
+        private const float CoreRadius = 22f;
+        private const float CoreMeleeReach = 130f;       // melee swings count as core hits from this close to it
+        private const float Phase2SpeedMult = 1.25f;
         private const int Phase1Music = MusicID.Boss2;
         private const int Phase2Music = MusicID.Boss3;
 
@@ -48,12 +55,17 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         private const int IntroTicks = 150;
         private const int IntroDriveStart = 70;
         private const int IdleTicksPhase1 = 70;
+        private const int IdleTicksPhase2 = 45;
+        private const int TransitionTicks = 120;
+        private const int PlatesBlowTick = 60;
         private const int DespawnTicks = 90;
 
         // ---- Projectile damage. Vanilla multiplies hostile projectile damage by 2 (normal), 4 (expert), 6 (master). ----
         public const int ShellDamage = 20;
         private const int ShockwaveDamage = 18;
         private const int RocketDamage = 16;
+        private const int SteamDamage = 18;
+        private const int FlameDamage = 14;
 
         // ---- Attack tuning ----
         public const int CannonWindupTicks = 40;          // arm cannons aim (with a telegraph line) before firing
@@ -68,9 +80,22 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         private const float RamSpeed = 11f;
         private const int RamMaxTicks = 90;
         private const int StunTicks = 75;
+        private const int SecondSlamDelayTicks = 32;      // phase 2 slams twice
         private const int RocketCountPhase1 = 2;
+        private const int RocketCountPhase2 = 3;
         private const int RocketGapTicks = 18;
         private const float RocketLaunchSpeed = 6f;
+        private const float VentSpacing = 9 * 16f;         // steam vents erupt in two alternating rows of columns
+        private const int VentFirstDelay = 55;
+        private const int VentSecondDelay = 105;
+        private const int VentAttackTicks = 180;
+        private const int FlameWindupTicks = 40;
+        private const int FlameSweepTicks = 70;
+        private const int FlameInterval = 3;
+        private const float FlameSpeed = 10f;
+        private const float FlameStartAngle = -0.95f;      // relative to facing: sweeps from high ahead...
+        private const float FlameEndAngle = 0.2f;          // ...down to just below level
+        private const float FlameTelegraphLength = 420f;
 
         // ---- States (ai[0]) ----
         public const float StateIntro = 0f;
@@ -80,16 +105,21 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         public const float StateRam = 4f;
         public const float StateStunned = 5f;
         public const float StateRockets = 6f;
+        public const float StateTransition = 7f;
+        public const float StateVents = 8f;
+        public const float StateFlame = 9f;
         public const float StateDespawn = 10f;
 
         private static readonly float[] Phase1Attacks = { StateCannons, StateSlam, StateRam, StateRockets };
+        private static readonly float[] Phase2Attacks = { StateCannons, StateSlam, StateRam, StateRockets, StateVents, StateFlame };
+        private static readonly Color FlameLineColor = new Color(255, 140, 40);
 
         private static readonly Color RamLineColor = new Color(255, 70, 40);
 
         private ref float State => ref NPC.ai[0];
         private ref float Timer => ref NPC.ai[1];
         private ref float Phase => ref NPC.ai[2];   // 0/1 = phase 1 (plated), 2 = phase 2 (core exposed)
-        private ref float Aux => ref NPC.ai[3];     // ram direction (+1/-1)
+        private ref float Aux => ref NPC.ai[3];     // ram / flamethrower direction (+1/-1)
 
         private bool IsPhase2 => Phase >= 2f;
         private int Tick => (int)Timer;
@@ -148,8 +178,20 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             return count;
         }
 
-        // 1 with both arms, a little more for each one destroyed (after the intro, when the arms exist).
-        private float Rage => State == StateIntro ? 1f : 1f + RageSpeedPerLostArm * (2 - AliveArms(NPC));
+        // 1 with both arms, a little more for each one destroyed (after the intro, when the arms exist); faster in phase 2.
+        private float Rage => (State == StateIntro ? 1f : 1f + RageSpeedPerLostArm * (2 - AliveArms(NPC))) * (IsPhase2 ? Phase2SpeedMult : 1f);
+
+        // The exposed core in phase 2 (matches the sprite: the core sits a little ahead of the middle of the hull).
+        private Vector2 CoreCenter => NPC.Top + new Vector2(NPC.direction * 4f, 42f);
+
+        // The flamethrower nozzle under the helm, at the front.
+        private Vector2 Nozzle => NPC.Top + new Vector2(NPC.direction * 60f, 32f);
+
+        private float FlameAngle(float t, int dir)
+        {
+            float relative = MathHelper.Lerp(FlameStartAngle, FlameEndAngle, MathHelper.Clamp(t, 0f, 1f));
+            return dir > 0 ? relative : MathHelper.Pi - relative;
+        }
 
         // ================= AI =================
 
@@ -169,18 +211,27 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             }
 
             Player player = Main.player[NPC.target];
-            NPC.dontTakeDamage = State == StateIntro || State == StateDespawn;
+            NPC.dontTakeDamage = State == StateIntro || State == StateTransition || State == StateDespawn;
             NPC.damage = State == StateRam && Tick >= RamWindupTicks ? RamDamage : ContactDamage;
             Music = IsPhase2 ? Phase2Music : Phase1Music;
 
-            if (State != StateRam && State != StateStunned && State != StateDespawn)
+            if (State != StateRam && State != StateStunned && State != StateDespawn && State != StateFlame)
             {
                 NPC.direction = player.Center.X > NPC.Center.X ? 1 : -1;
             }
             NPC.spriteDirection = -NPC.direction; // art faces right
 
+            if (!IsPhase2 && State != StateIntro && State != StateTransition && State != StateDespawn
+                && NPC.life <= NPC.lifeMax * Phase2LifeRatio)
+            {
+                SetState(StateTransition);
+            }
+
             switch (State)
             {
+                case StateTransition: Transition(); break;
+                case StateVents: Vents(player); break;
+                case StateFlame: Flame(); break;
                 case StateIntro: Intro(); break;
                 case StateDrive: Drive(player); break;
                 case StateCannons: Cannons(); break;
@@ -291,14 +342,15 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             NPC.velocity.X = MoveTowards(NPC.velocity.X, target, DriveAccel);
 
             Timer++;
-            int idleTicks = (int)(IdleTicksPhase1 / Rage);
+            int idleTicks = (int)((IsPhase2 ? IdleTicksPhase2 : IdleTicksPhase1) / Rage);
             if (Tick >= idleTicks && Main.netMode != NetmodeID.MultiplayerClient)
             {
+                float[] pool = IsPhase2 ? Phase2Attacks : Phase1Attacks;
                 float next;
                 int guard = 0;
                 do
                 {
-                    next = Phase1Attacks[Main.rand.Next(Phase1Attacks.Length)];
+                    next = pool[Main.rand.Next(pool.Length)];
                 }
                 while ((next == lastAttack || (next == StateCannons && AliveArms(NPC) == 0)) && ++guard < 20);
                 lastAttack = next;
@@ -330,16 +382,35 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
                 Dust steam = Dust.NewDustDirect(NPC.BottomLeft - new Vector2(0f, 12f), NPC.width, 12, DustID.Smoke, 0f, -2f, 100, default, 1.6f);
                 steam.noGravity = true;
             }
-            if (Tick == SlamWindupTicks)
+            if (Tick == SlamWindupTicks || (IsPhase2 && Tick == SlamWindupTicks + SecondSlamDelayTicks))
             {
                 SlamImpact();
             }
 
             Timer++;
-            if (Tick >= SlamWindupTicks + SlamRecoverTicks)
+            if (Tick >= SlamWindupTicks + SlamRecoverTicks + (IsPhase2 ? SecondSlamDelayTicks : 0))
             {
                 EndAttack();
             }
+        }
+
+        // How far the front is lifted (0..1) while rearing up for a slam (twice in phase 2).
+        private float SlamLift()
+        {
+            if (State != StateSlam)
+            {
+                return 0f;
+            }
+            if (Tick < SlamWindupTicks)
+            {
+                return MathHelper.SmoothStep(0f, 1f, Tick / (float)SlamWindupTicks);
+            }
+            int since = Tick - SlamWindupTicks;
+            if (IsPhase2 && since < SecondSlamDelayTicks)
+            {
+                return MathHelper.SmoothStep(0f, 1f, since / (float)SecondSlamDelayTicks);
+            }
+            return 0f;
         }
 
         private void SlamImpact()
@@ -446,7 +517,7 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
         private void Rockets(Player player)
         {
             Brake(0.9f);
-            int count = RocketCountPhase1;
+            int count = IsPhase2 ? RocketCountPhase2 : RocketCountPhase1;
             for (int i = 0; i < count; i++)
             {
                 if (Tick == 20 + i * RocketGapTicks)
@@ -463,6 +534,146 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             }
             Timer++;
             if (Tick >= 20 + count * RocketGapTicks + 40)
+            {
+                EndAttack();
+            }
+        }
+
+        // Phase 2: klaxons and shaking, then the armour plates blast off and the core is exposed.
+        private void Transition()
+        {
+            Brake(0.85f);
+            if (Tick == 1)
+            {
+                SoundEngine.PlaySound(SoundID.Item113 with { Pitch = -0.8f }, NPC.Center); // klaxon placeholder
+                Shake(4f, PlatesBlowTick);
+            }
+            if (Tick < PlatesBlowTick && Main.netMode != NetmodeID.Server)
+            {
+                if (Tick % 20 == 10)
+                {
+                    SoundEngine.PlaySound(SoundID.Item113 with { Pitch = -0.6f }, NPC.Center);
+                }
+                Dust steam = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.Smoke, 0f, -2f, 100, default, 2f);
+                steam.noGravity = true;
+                if (Main.rand.NextBool(2))
+                {
+                    Dust spark = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.Electric, 0f, 0f, 100, default, 0.9f);
+                    spark.noGravity = true;
+                }
+            }
+            if (Tick == PlatesBlowTick)
+            {
+                Phase = 2f;
+                BlowPlates();
+            }
+
+            Timer++;
+            if (Tick >= TransitionTicks)
+            {
+                EndAttack();
+            }
+        }
+
+        private void BlowPlates()
+        {
+            SoundEngine.PlaySound(SoundID.Item14 with { Pitch = -0.4f, Volume = 1.3f }, NPC.Center);
+            SoundEngine.PlaySound(SoundID.Item62, NPC.Center);
+            Shake(12f, 40);
+            if (Main.netMode == NetmodeID.Server)
+            {
+                return;
+            }
+            for (int i = 0; i < 60; i++)
+            {
+                Dust fire = Dust.NewDustPerfect(CoreCenter, DustID.Torch, Main.rand.NextVector2Circular(12f, 12f), 100, default, 2.6f);
+                fire.noGravity = true;
+                Dust copper = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.Copper, 0f, 0f, 100, default, 1.5f);
+                copper.velocity = Main.rand.NextVector2Circular(8f, 8f);
+            }
+            foreach (string gore in new[] { "TitanPlate1", "TitanPlate2", "TitanPlate3", "TitanPlate1", "TitanPlate2", "TitanPlate3" })
+            {
+                Gore.NewGore(NPC.GetSource_FromAI(), NPC.Center + Main.rand.NextVector2Circular(50f, 30f),
+                    Main.rand.NextVector2Circular(7f, 7f) - new Vector2(0f, 5f), Mod.Find<ModGore>(gore).Type);
+            }
+        }
+
+        // Scalding steam: the floor hisses in rows of spots, then they erupt in tall columns, one row after the other.
+        private void Vents(Player player)
+        {
+            Brake(0.9f);
+            if (Tick == 1)
+            {
+                SoundEngine.PlaySound(SoundID.Item13 with { Pitch = -0.5f }, NPC.Center);
+                if (Main.netMode != NetmodeID.MultiplayerClient)
+                {
+                    float left, right, floor;
+                    if (DwarvenHoldSystem.Exists)
+                    {
+                        GetArena(out left, out right, out floor);
+                        left -= NPC.width / 2f;
+                        right += NPC.width / 2f;
+                    }
+                    else
+                    {
+                        left = player.Center.X - 800f;
+                        right = player.Center.X + 800f;
+                        floor = player.Bottom.Y;
+                    }
+                    float offset = Main.rand.NextFloat(VentSpacing);
+                    int i = 0;
+                    for (float x = left + offset; x <= right; x += VentSpacing / 2f, i++)
+                    {
+                        int delay = i % 2 == 0 ? VentFirstDelay : VentSecondDelay;
+                        Projectile.NewProjectile(NPC.GetSource_FromAI(), new Vector2(x, floor), Vector2.Zero,
+                            ModContent.ProjectileType<TitanSteamVent>(), SteamDamage, 2f, Main.myPlayer, floor, delay);
+                    }
+                }
+            }
+            Timer++;
+            if (Tick >= VentAttackTicks)
+            {
+                EndAttack();
+            }
+        }
+
+        // Flamethrower from under the helm: builds pressure (aim line), then sweeps from high ahead down to the floor.
+        private void Flame()
+        {
+            Brake(0.9f);
+            if (Tick == 0 && Main.netMode != NetmodeID.MultiplayerClient)
+            {
+                Aux = Main.player[NPC.target].Center.X > NPC.Center.X ? 1f : -1f;
+                NPC.netUpdate = true;
+            }
+            int dir = Aux >= 0f ? 1 : -1;
+            NPC.direction = dir;
+
+            if (Tick < FlameWindupTicks)
+            {
+                if (Main.netMode != NetmodeID.Server && Main.rand.NextBool(2))
+                {
+                    Dust ember = Dust.NewDustPerfect(Nozzle, DustID.Torch, Main.rand.NextVector2Circular(1.5f, 1.5f), 100, default, 1.3f);
+                    ember.noGravity = true;
+                }
+            }
+            else if (Tick < FlameWindupTicks + FlameSweepTicks)
+            {
+                float t = (Tick - FlameWindupTicks) / (float)FlameSweepTicks;
+                if (Tick % 6 == 0)
+                {
+                    SoundEngine.PlaySound(SoundID.Item34, Nozzle);
+                }
+                if (Tick % FlameInterval == 0 && Main.netMode != NetmodeID.MultiplayerClient)
+                {
+                    Vector2 velocity = FlameAngle(t, dir).ToRotationVector2().RotatedByRandom(0.06f) * FlameSpeed;
+                    Projectile.NewProjectile(NPC.GetSource_FromAI(), Nozzle, velocity, ModContent.ProjectileType<TitanFlame>(),
+                        FlameDamage, 0f, Main.myPlayer);
+                }
+            }
+
+            Timer++;
+            if (Tick >= FlameWindupTicks + FlameSweepTicks + 25)
             {
                 EndAttack();
             }
@@ -585,6 +796,42 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             }
         }
 
+        // Phase 2: hits on the exposed core deal extra damage (projectiles that touch it, melee from close by).
+        public override void ModifyHitByProjectile(Projectile projectile, ref NPC.HitModifiers modifiers)
+        {
+            if (IsPhase2 && TouchesCore(projectile.Hitbox))
+            {
+                CoreHit(ref modifiers);
+            }
+        }
+
+        public override void ModifyHitByItem(Player player, Item item, ref NPC.HitModifiers modifiers)
+        {
+            if (IsPhase2 && Vector2.Distance(player.Center, CoreCenter) < CoreMeleeReach)
+            {
+                CoreHit(ref modifiers);
+            }
+        }
+
+        private bool TouchesCore(Rectangle hitbox)
+        {
+            Vector2 closest = Vector2.Clamp(CoreCenter, hitbox.TopLeft(), hitbox.BottomRight());
+            return Vector2.Distance(closest, CoreCenter) <= CoreRadius;
+        }
+
+        private void CoreHit(ref NPC.HitModifiers modifiers)
+        {
+            modifiers.FinalDamage *= CoreDamageBonus;
+            if (Main.netMode != NetmodeID.Server)
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    Dust spark = Dust.NewDustPerfect(CoreCenter, DustID.Torch, Main.rand.NextVector2Circular(5f, 5f), 100, default, 1.6f);
+                    spark.noGravity = true;
+                }
+            }
+        }
+
         public override void HitEffect(NPC.HitInfo hit)
         {
             if (Main.netMode == NetmodeID.Server)
@@ -655,10 +902,13 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             }
 
             // Rearing up before a slam: the front lifts.
-            float rotation = 0f;
-            if (State == StateSlam && Tick < SlamWindupTicks)
+            float rotation = -NPC.direction * SlamTilt * SlamLift();
+
+            // Flamethrower: aiming line at the start of the sweep while it builds pressure.
+            if (State == StateFlame && Tick < FlameWindupTicks)
             {
-                rotation = -NPC.direction * SlamTilt * MathHelper.SmoothStep(0f, 1f, Tick / (float)SlamWindupTicks);
+                int dir = Aux >= 0f ? 1 : -1;
+                BeamRenderer.DrawTelegraph(Nozzle, FlameAngle(0f, dir), FlameTelegraphLength, 2f, FlameLineColor, Tick / (float)FlameWindupTicks);
             }
 
             // Afterimages while ramming.
@@ -673,6 +923,14 @@ namespace Reign_of_the_Ancients.NPCs.Bosses
             }
 
             spriteBatch.Draw(texture, NPC.Bottom - screenPos + new Vector2(0f, 2f), NPC.frame, NPC.GetAlpha(drawColor), rotation, origin, NPC.scale, effects, 0f);
+
+            // The exposed core pulses with heat in phase 2.
+            if (IsPhase2 && NPC.alpha < 200)
+            {
+                float pulse = 1f + 0.15f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 7f);
+                BeamRenderer.Glow(CoreCenter - screenPos, 70f * pulse, new Color(255, 140, 40) * 0.6f);
+                BeamRenderer.Glow(CoreCenter - screenPos, 30f * pulse, new Color(255, 230, 150) * 0.8f);
+            }
             return false;
         }
     }

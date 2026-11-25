@@ -59,6 +59,8 @@ Projectiles: {
 	TitanShell.DisplayName: Cannon Shell
 	TitanRocket.DisplayName: Steam Rocket
 	TitanShockwave.DisplayName: Shockwave
+	TitanSteamVent.DisplayName: Scalding Steam
+	TitanFlame.DisplayName: Titan Flame
 }
 
 # Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
