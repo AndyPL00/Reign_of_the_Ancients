@@ -3,12 +3,14 @@ NPCs: {
 	ElfSquire.DisplayName: Elf Squire
 	ElfHighGuard.DisplayName: Elf High-Guard
 	ElvenArchmage.DisplayName: Elven Archmage
-
 	# ---- Dwarven Hold grunts (placeholder names) ----
 	DwarfSapper.DisplayName: Corrupted Sapper
 	DwarfGunner.DisplayName: Corrupted Gunner
 	DwarfMiner.DisplayName: Corrupted Miner
 	DwarfMechPilot.DisplayName: Rusted Mech Pilot
+	# ---- Dwarven Titan (placeholder names) ----
+	DwarvenTitan.DisplayName: Dwarven Titan
+	DwarvenTitanCannon.DisplayName: Titan Arm Cannon
 
 	Volodar: {
 		DisplayName: Volodar
@@ -19,12 +21,16 @@ NPCs: {
 	}
 }
 
-# Placeholder: Andy writes the lore.
-Bestiary.Volodar: "[Placeholder bestiary entry for Volodar.]"
-Bestiary.DwarfSapper: "[Placeholder bestiary entry for the Corrupted Sapper.]"
-Bestiary.DwarfGunner: "[Placeholder bestiary entry for the Corrupted Gunner.]"
-Bestiary.DwarfMiner: "[Placeholder bestiary entry for the Corrupted Miner.]"
-Bestiary.DwarfMechPilot: "[Placeholder bestiary entry for the Rusted Mech Pilot.]"
+Bestiary: {
+	# Placeholder: Andy writes the lore.
+	Volodar: "[Placeholder bestiary entry for Volodar.]"
+	DwarfSapper: "[Placeholder bestiary entry for the Corrupted Sapper.]"
+	DwarfGunner: "[Placeholder bestiary entry for the Corrupted Gunner.]"
+	DwarfMiner: "[Placeholder bestiary entry for the Corrupted Miner.]"
+	DwarfMechPilot: "[Placeholder bestiary entry for the Rusted Mech Pilot.]"
+	DwarvenTitan: "[Placeholder bestiary entry for the Dwarven Titan.]"
+}
+
 BossChecklist.Volodar.SpawnInfo: Use a [i:Reign_of_the_Ancients/SealedTome] Sealed Tome in the throne room of the Mystical Library.
 
 Projectiles: {
@@ -50,16 +56,23 @@ Projectiles: {
 	ElvenCrescent.DisplayName: Crescent of Light
 	ElvenSceptreBeam.DisplayName: Arcane Beam
 	ElvenWhipProjectile.DisplayName: Elven Whip
+	TitanShell.DisplayName: Cannon Shell
+	TitanRocket.DisplayName: Steam Rocket
+	TitanShockwave.DisplayName: Shockwave
 }
 
 # Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
 ElvenOreSpawned: "[Placeholder] Your world has been blessed with Elven Ore!"
-Tiles.ElvenOreTile.MapEntry: Elven Ore
-Tiles.TitanControlMachine.MapEntry: Titan Control Machine
+
+Tiles: {
+	ElvenOreTile.MapEntry: Elven Ore
+	TitanControlMachine.MapEntry: Titan Control Machine
+}
 
 # Placeholders: Andy writes these. Leave empty ("") to skip a message.
 HoldGateOpened: "[Placeholder] Somewhere deep below, the great gate of the dwarven hold grinds open..."
-TitanMachineDormant: "[Placeholder] The great machine is cold and silent. (The Dwarven Titan isn't built yet.)"
+# Shown when the control machine is used before Skeletron has been defeated.
+TitanMachineDormant: "[Placeholder] The great machine is cold and silent."
 
 Buffs: {
 	SpellweaveChargedBuff: {
