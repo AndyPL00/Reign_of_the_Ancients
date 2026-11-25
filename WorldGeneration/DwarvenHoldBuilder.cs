@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Reign_of_the_Ancients.Biomes;
 using Reign_of_the_Ancients.Tiles.DwarvenHold;
+using Reign_of_the_Ancients.Tiles.DwarvenHold.Decor;
 using Reign_of_the_Ancients.Walls.DwarvenHold;
 using Terraria;
 using Terraria.ID;
@@ -27,7 +28,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
     //  [lava-moss cave] |GATE| grey keep | == great hall: red brick, V gables, pillars, windows; lift bay in the middle == |
     //                                                              lift
     //            | workshop | ===== great forge: symmetric, ceiling steps up to the middle ===== | workshop | treasury |
-    //                 |       landing above the crucible, furnace banks, smokestacks, tanks, ore carts        |
+    //                 |  hanging crucible under the landing, gear trains, boilers, tanks, pipes, cargo      |
     //   | ========== mine rail tunnel ============================================================= | ==== foundry ==== |
     //        excavation cavern  ==== lower rail tunnel ====  excavation cavern                         (Titan arena)
     //        side tunnels wander off everywhere, ending in small mining pockets
@@ -58,10 +59,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
         public const int WorkshopWidth = 40, WorkshopHeight = 14;
         public const int ForgeDoorHeight = 8;
         public const int TreasuryWidth = 20, TreasuryHeight = 10, TreasuryDoorHeight = 5;
-        public const int CrucibleHalfWidth = 3;
-        public const int BigFurnaceWidth = 11, BigFurnaceHeight = 9;
-        public const int SmallFurnaceWidth = 7, SmallFurnaceHeight = 5, SmokestackHeight = 6;
-        public const int TankWidth = 9, TankHeight = 8;
+        public const int ScaffoldBeamSpacing = 6;            // wooden posts under the walkable machine platforms
 
         // ---- Mines ----
         public const int MineLength = 334, MineHeight = 9;
@@ -107,7 +105,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
         private const int FoundryTop = MineFloor - FoundryHeight;
         private const int FoundryAxis = FoundryStart + FoundryWidth / 2;
         private const int Landing = ForgeFloor - 15;         // lift landing, just above the crucible
-        private const int CrucibleBottom = ForgeFloor - 11;
+        private const int CrucibleTop = Landing + 2;         // hanging crucible, chains up to the landing
 
         private const int UMin = -40, UMax = FoundryEnd + 10, VMin = -36, VMax = 150;
 
@@ -165,6 +163,7 @@ namespace Reign_of_the_Ancients.WorldGeneration
             WorkshopDetails(l);
             MineDetails(l);
             FoundryDetails(l);
+            FramePipes(l);
 
             WorldGen.RangeFrame(l.Bounds.Left, l.Bounds.Top, l.Bounds.Right, l.Bounds.Bottom);
             zone = null;
@@ -725,55 +724,63 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 }
             }
 
-            // Crucible pouring a molten stream into a floor pool.
-            for (int u = Axis - CrucibleHalfWidth; u <= Axis + CrucibleHalfWidth; u++)
+            // Iron crucible hanging on two chains under the lift landing, pouring a molten stream into a floor pool.
+            Decor<HoldCrucible>(l, Axis - 3, CrucibleTop);
+            SetTile(X(l, Axis - 2), Y(l, CrucibleTop - 1), TileID.Chain);
+            SetTile(X(l, Axis + 1), Y(l, CrucibleTop - 1), TileID.Chain);
+            for (int v = CrucibleTop + 4; v < ForgeFloor; v++)
             {
-                SetTile(X(l, u), Y(l, CrucibleBottom), foundryBrick);
-                for (int v = CrucibleBottom - 2; v < CrucibleBottom; v++)
-                {
-                    if (Math.Abs(u - Axis) == CrucibleHalfWidth)
-                    {
-                        SetTile(X(l, u), Y(l, v), foundryBrick);
-                    }
-                    else
-                    {
-                        Lava(X(l, u), Y(l, v));
-                    }
-                }
-            }
-            for (int v = CrucibleBottom + 1; v < ForgeFloor; v++)
-            {
+                SetWall(X(l, Axis - 1), Y(l, v), streamWall);
                 SetWall(X(l, Axis), Y(l, v), streamWall);
             }
-            for (int u = Axis - 2; u <= Axis + 2; u++)
+            for (int u = Axis - 2; u <= Axis + 1; u++)
             {
                 Lava(X(l, u), Y(l, ForgeFloor));
             }
 
-            // Symmetric machinery: big furnace banks, smaller furnaces with smokestacks, cooling tanks near the walls.
-            Furnace(l, Axis - 4 - BigFurnaceWidth, BigFurnaceWidth, BigFurnaceHeight, false);
-            Furnace(l, Axis + 5, BigFurnaceWidth, BigFurnaceHeight, false);
-            Furnace(l, Axis - 30, SmallFurnaceWidth, SmallFurnaceHeight, true);
-            Furnace(l, Axis + 24, SmallFurnaceWidth, SmallFurnaceHeight, true);
-            WaterTank(l, Axis - 50);
-            WaterTank(l, Axis + 42);
-
-            // Ore carts hanging on chains, lanterns along the ceiling steps.
-            foreach (int off in new[] { -40, -18, 18, 40 })
+            // Gear trains turning on either side of the lift (large -> medium -> small, alternating direction).
+            for (int s = -1; s <= 1; s += 2)
             {
-                int u = Axis + off, top = ForgeCeiling(u);
-                for (int v = top; v < top + 6; v++)
-                {
-                    SetTile(X(l, u), Y(l, v), TileID.Chain);
-                }
-                Platforms(l, u - 1, u + 2, top + 6);
-                SetTile(X(l, u), Y(l, top + 5), WorldGen.genRand.NextBool() ? TileID.Gold : TileID.Iron);
+                bool cw = s > 0;
+                Gear(l, Axis + s * 10, 12, HoldGear.Large, cw);
+                Gear(l, Axis + s * 15, 16, HoldGear.Medium, !cw);
+                Gear(l, Axis + s * 19, 14, HoldGear.Small, cw);
             }
-            for (int off = -ForgeWidth / 2 + 6; off < ForgeWidth / 2 - 4; off += 12)
+
+            // Mirrored machinery on both sides of the crucible. a = offset of an object's inner edge from the axis.
+            for (int s = -1; s <= 1; s += 2)
             {
-                if (Math.Abs(off) > 8)
+                // Boiler on the floor beside the pool, its steam pipe running out to a tank on a raised platform.
+                int boiler = SymStart(Axis, s, 7, 6);
+                Decor<HoldBoiler>(l, boiler, ForgeFloor - 8);
+                int boilerPipe = SymCell(Axis, s, 10);
+                int tankPipe = SymCell(Axis, s, 23);
+                Pipe(l, (boilerPipe, ForgeFloor - 9), (boilerPipe, 26), (SymCell(Axis, s, 20), 26));
+
+                Scaffold(l, SymStart(Axis, s, 18, 13), 13, 28, DwarvenHold.Forges);
+                Decor<HoldPressureTank>(l, SymStart(Axis, s, 21, 4), 22);
+                Pipe(l, (tankPipe, 21), (tankPipe, ForgeCeiling(tankPipe)));
+                PipeVariant(l, tankPipe, 17, HoldPipe.Valve);
+                PipeVariant(l, tankPipe, 13, HoldPipe.Gauge);
+
+                // Toward the wall: a floor tank and a second boiler, linked, both piped up into the ceiling.
+                Decor<HoldPressureTank>(l, SymStart(Axis, s, 43, 4), ForgeFloor - 6);
+                Decor<HoldBoiler>(l, SymStart(Axis, s, 50, 6), ForgeFloor - 8);
+                int outerTankPipe = SymCell(Axis, s, 45);
+                int outerBoilerPipe = SymCell(Axis, s, 53);
+                Pipe(l, (outerTankPipe, ForgeFloor - 7), (outerTankPipe, ForgeCeiling(outerTankPipe)));
+                Pipe(l, (outerBoilerPipe, ForgeFloor - 9), (outerBoilerPipe, ForgeCeiling(outerBoilerPipe)));
+                Pipe(l, (SymCell(Axis, s, 47), ForgeFloor - 2), (SymCell(Axis, s, 49), ForgeFloor - 2));
+                PipeVariant(l, outerTankPipe, ForgeFloor - 11, HoldPipe.Gauge);
+                PipeVariant(l, outerBoilerPipe, ForgeFloor - 13, HoldPipe.Valve);
+
+                // Cargo on chains from the stepped ceiling, and a couple of lanterns (the boilers are the main light).
+                int cargoA = SymStart(Axis, s, 32, 3), cargoB = SymStart(Axis, s, 37, 3);
+                Hang(l, cargoA, ForgeCeiling(cargoA + 1), s > 0 ? HoldHangingCargo.Crate : HoldHangingCargo.Barrel, 4);
+                Hang(l, cargoB, ForgeCeiling(cargoB + 1), s > 0 ? HoldHangingCargo.OreBucket : HoldHangingCargo.Pulley, 5);
+                foreach (int a in new[] { 28, 48 })
                 {
-                    int u = Axis + off;
+                    int u = SymCell(Axis, s, a);
                     Place(X(l, u), Y(l, ForgeCeiling(u)), ItemID.ChainLantern);
                 }
             }
@@ -830,62 +837,6 @@ namespace Reign_of_the_Ancients.WorldGeneration
                 PlaceSingle(X(l, u), Y(l, floor), u % 2 == 0 ? ItemID.GoldCoin : ItemID.SilverCoin);
             }
             Place(X(l, TreasuryStart + TreasuryWidth / 2), Y(l, ForgeFloor - TreasuryHeight), ItemID.ChainLantern);
-        }
-
-        // A brick block standing on the forge floor with a grid of fire windows (living fire blocks).
-        private static void Furnace(HoldLayout l, int left, int width, int height, bool smokestack)
-        {
-            for (int u = left; u < left + width; u++)
-            {
-                for (int v = ForgeFloor - height; v < ForgeFloor; v++)
-                {
-                    int du = u - left, dv = v - (ForgeFloor - height);
-                    bool window = du % 2 == 1 && dv % 2 == 1 && du < width - 1 && dv < height - 1;
-                    SetTile(X(l, u), Y(l, v), window ? TileID.LivingFire : foundryBrick);
-                }
-            }
-            if (smokestack)
-            {
-                int su = left + width / 2 - 1;
-                for (int v = ForgeFloor - height - SmokestackHeight; v < ForgeFloor - height; v++)
-                {
-                    SetTile(X(l, su), Y(l, v), foundryBrick);
-                    SetTile(X(l, su + 1), Y(l, v), foundryBrick);
-                }
-            }
-        }
-
-        // Glass cooling tank full of water, with pipes running up to the ceiling.
-        private static void WaterTank(HoldLayout l, int left)
-        {
-            for (int u = left; u < left + TankWidth; u++)
-            {
-                for (int v = ForgeFloor - TankHeight; v < ForgeFloor; v++)
-                {
-                    bool shell = u == left || u == left + TankWidth - 1 || v == ForgeFloor - TankHeight || v == ForgeFloor - 1;
-                    if (shell)
-                    {
-                        SetTile(X(l, u), Y(l, v), TileID.Glass);
-                    }
-                    else
-                    {
-                        Tile t = Main.tile[X(l, u), Y(l, v)];
-                        t.ClearTile();
-                        t.LiquidType = LiquidID.Water;
-                        t.LiquidAmount = (byte)(v == ForgeFloor - TankHeight + 1 ? 140 : 255);
-                    }
-                }
-            }
-            foreach (int pu in new[] { left + 2, left + TankWidth - 3 })
-            {
-                for (int v = ForgeTop; v < ForgeFloor - TankHeight; v++)
-                {
-                    if (ZoneAt(pu, v) == DwarvenHold.Forges)
-                    {
-                        SetWall(X(l, pu), Y(l, v), pipeWall);
-                    }
-                }
-            }
         }
 
         private static void MineDetails(HoldLayout l)
@@ -1022,19 +973,206 @@ namespace Reign_of_the_Ancients.WorldGeneration
             }
             WorldGen.PlaceObject(l.Machine.X + 1, l.Machine.Y + 2, ModContent.TileType<TitanControlMachine>(), true);
 
-            // Chains and lanterns hanging from the stepped ceiling.
-            for (int u = FoundryStart + 20; u < FoundryEnd - 10; u += 9)
+            // A huge iron gear high above the arena, meshing with gear trains on both sides. The floor stays clear
+            // for the Titan's treads.
+            const int F = FoundryTop;
+            Gear(l, FoundryAxis, F + 8, HoldGear.Huge, true);
+            for (int s = -1; s <= 1; s += 2)
             {
-                int top = FoundryCeiling(u), length = WorldGen.genRand.Next(3, 9);
-                for (int v = top; v < top + length; v++)
+                Gear(l, FoundryAxis + s * 9, F + 11, HoldGear.Large, false);
+                Gear(l, FoundryAxis + s * 14, F + 15, HoldGear.Medium, true);
+                Gear(l, FoundryAxis + s * 18, F + 13, HoldGear.Small, false);
+            }
+
+            for (int s = -1; s <= 1; s += 2)
+            {
+                int midCargo = SymStart(FoundryAxis, s, 21, 3);
+                Hang(l, midCargo, FoundryCeiling(midCargo + 1), s > 0 ? HoldHangingCargo.OreBucket : HoldHangingCargo.Crate, 4);
+                int lantern = SymCell(FoundryAxis, s, 25);
+                Place(X(l, lantern), Y(l, FoundryCeiling(lantern)), ItemID.ChainLantern);
+
+                // Between the piston columns: a walkable platform on wooden posts carrying a boiler and a tank.
+                const int deck = MineFloor - 12;
+                Scaffold(l, SymStart(FoundryAxis, s, 33, 19), 19, deck, DwarvenHold.Foundry);
+                Decor<HoldBoiler>(l, SymStart(FoundryAxis, s, 35, 6), deck - 8);
+                Decor<HoldPressureTank>(l, SymStart(FoundryAxis, s, 45, 4), deck - 6);
+                int boilerPipe = SymCell(FoundryAxis, s, 38);
+                int tankPipe = SymCell(FoundryAxis, s, 47);
+                Pipe(l, (boilerPipe, deck - 9), (boilerPipe, FoundryCeiling(boilerPipe)));
+                Pipe(l, (tankPipe, deck - 7), (tankPipe, FoundryCeiling(tankPipe)));
+                Pipe(l, (SymCell(FoundryAxis, s, 41), deck - 2), (SymCell(FoundryAxis, s, 44), deck - 2));
+                PipeVariant(l, boilerPipe, deck - 15, HoldPipe.Valve);
+                PipeVariant(l, boilerPipe, deck - 18, HoldPipe.Gauge);
+                PipeVariant(l, tankPipe, deck - 11, HoldPipe.Gauge);
+                int deckCargo = SymStart(FoundryAxis, s, 41, 3);
+                Hang(l, deckCargo, FoundryCeiling(deckCargo + 1), s > 0 ? HoldHangingCargo.Barrel : HoldHangingCargo.Pulley, 4);
+            }
+
+            // Far end: a pipe down the wall beside the molten fall and cargo over the channel.
+            int farPipe = FoundryAxis + 61;
+            Pipe(l, (farPipe, FoundryCeiling(farPipe)), (farPipe, MineFloor - 1));
+            PipeVariant(l, farPipe, MineFloor - 7, HoldPipe.Valve);
+            PipeVariant(l, farPipe, MineFloor - 12, HoldPipe.Gauge);
+            Hang(l, FoundryAxis + 63, FoundryCeiling(FoundryAxis + 64), HoldHangingCargo.Crate, 6);
+
+            // Entrance end: the control machine is piped up into the ceiling, with a lantern beside it.
+            int machinePipe = FoundryStart + 8;
+            Pipe(l, (machinePipe, MineFloor - DaisTiers - 4), (machinePipe, FoundryCeiling(machinePipe)));
+            PipeVariant(l, machinePipe, MineFloor - 13, HoldPipe.Gauge);
+            PipeVariant(l, machinePipe, MineFloor - 19, HoldPipe.Valve);
+            Hang(l, FoundryStart + 2, FoundryCeiling(FoundryStart + 3), HoldHangingCargo.OreBucket, 4);
+            Place(X(l, FoundryStart + 12), Y(l, FoundryCeiling(FoundryStart + 12)), ItemID.ChainLantern);
+        }
+
+        // ================= Decor helpers =================
+
+        // Mirroring around a room's axis (the axis is the edge between cells axis-1 and axis).
+        // s = +1 for the axis side, -1 for the mirrored side; a = distance of the object's inner edge from the axis.
+        private static int SymStart(int axis, int s, int a, int width) => s > 0 ? axis + a : axis - a - width;
+        private static int SymCell(int axis, int s, int a) => s > 0 ? axis + a : axis - 1 - a;
+
+        // A multi-tile decor object with its top-left at local (u0, v0) (left/right handled for either Side).
+        private static void Decor<T>(HoldLayout l, int u0, int v0, int style = 0) where T : HoldDecorBase
+        {
+            T decor = ModContent.GetInstance<T>();
+            int left = l.Side > 0 ? X(l, u0) : X(l, u0 + decor.Width - 1);
+            HoldDecorBase.Place(left, Y(l, v0), decor.Type, decor.Width, decor.Height, style);
+        }
+
+        // A gear centred on the tile corner (cu, cv).
+        private static void Gear(HoldLayout l, int cu, int cv, int size, bool clockwise)
+        {
+            Decor<HoldGear>(l, cu - 1, cv - 1, HoldGear.StyleFor(size, clockwise));
+        }
+
+        // A pipe through the given corner points (straight runs between them). Skips cells that are already taken;
+        // a flange collar every few tiles. Connections are framed at the end by FramePipes.
+        private static void Pipe(HoldLayout l, params (int u, int v)[] points)
+        {
+            ushort pipe = (ushort)ModContent.TileType<HoldPipe>();
+            int run = 0;
+            for (int k = 0; k + 1 < points.Length; k++)
+            {
+                (int u, int v) = points[k];
+                (int u1, int v1) = points[k + 1];
+                int du = Math.Sign(u1 - u), dv = Math.Sign(v1 - v);
+                while (true)
                 {
-                    SetTile(X(l, u), Y(l, v), TileID.Chain);
+                    int x = X(l, u), y = Y(l, v);
+                    if (!Main.tile[x, y].HasTile)
+                    {
+                        SetTile(x, y, pipe);
+                        Main.tile[x, y].TileFrameY = (short)((run % 4 == 2 ? HoldPipe.Flange : HoldPipe.Plain) * 18);
+                    }
+                    run++;
+                    if (u == u1 && v == v1)
+                    {
+                        break;
+                    }
+                    u += du;
+                    v += dv;
                 }
             }
-            for (int u = FoundryStart + 16; u < FoundryEnd - 8; u += 18)
+        }
+
+        private static void PipeVariant(HoldLayout l, int u, int v, int variant)
+        {
+            Tile tile = Main.tile[X(l, u), Y(l, v)];
+            if (tile.HasTile && tile.TileType == ModContent.TileType<HoldPipe>())
             {
-                Place(X(l, u), Y(l, FoundryCeiling(u)), ItemID.ChainLantern);
+                tile.TileFrameY = (short)(variant * 18);
             }
+        }
+
+        // Joins neighbouring pipe tiles, and lets loose ends plug into whatever they touch
+        // (the ceiling, the floor, a boiler, a tank, the crucible or the Titan machine).
+        private static void FramePipes(HoldLayout l)
+        {
+            int pipe = ModContent.TileType<HoldPipe>();
+            int[] dirs = { HoldPipe.Up, HoldPipe.Right, HoldPipe.Down, HoldPipe.Left };
+            Point[] offsets = { new Point(0, -1), new Point(1, 0), new Point(0, 1), new Point(-1, 0) };
+            for (int x = l.Bounds.Left; x < l.Bounds.Right; x++)
+            {
+                for (int y = l.Bounds.Top; y < l.Bounds.Bottom; y++)
+                {
+                    Tile tile = Main.tile[x, y];
+                    if (!tile.HasTile || tile.TileType != pipe)
+                    {
+                        continue;
+                    }
+                    int mask = 0, count = 0;
+                    for (int d = 0; d < 4; d++)
+                    {
+                        Tile n = Main.tile[x + offsets[d].X, y + offsets[d].Y];
+                        if (n.HasTile && n.TileType == pipe)
+                        {
+                            mask |= dirs[d];
+                            count++;
+                        }
+                    }
+                    for (int d = 0; d < 4 && count < 2; d++)
+                    {
+                        bool opposite = count == 1 && (mask & dirs[(d + 2) % 4]) != 0;
+                        if ((count == 0 || opposite) && PipeConnects(x + offsets[d].X, y + offsets[d].Y))
+                        {
+                            mask |= dirs[d];
+                            count++;
+                        }
+                    }
+                    tile.TileFrameX = (short)(mask * 18);
+                }
+            }
+        }
+
+        private static bool PipeConnects(int x, int y)
+        {
+            Tile t = Main.tile[x, y];
+            if (!t.HasTile)
+            {
+                return false;
+            }
+            int type = t.TileType;
+            return (Main.tileSolid[type] && !Main.tileSolidTop[type]) || type == ModContent.TileType<HoldBoiler>()
+                || type == ModContent.TileType<HoldPressureTank>() || type == ModContent.TileType<HoldCrucible>()
+                || type == ModContent.TileType<TitanControlMachine>();
+        }
+
+        // A walkable wooden platform at row v, held up by wooden posts down to the floor.
+        private static void Scaffold(HoldLayout l, int u0, int width, int v, int zoneId)
+        {
+            for (int u = u0; u < u0 + width; u++)
+            {
+                if (!Main.tile[X(l, u), Y(l, v)].HasTile)
+                {
+                    SetTile(X(l, u), Y(l, v), TileID.Platforms);
+                }
+            }
+            for (int k = 0; k < width; k += ScaffoldBeamSpacing)
+            {
+                Post(l, u0 + k, v + 1, zoneId);
+            }
+            if ((width - 1) % ScaffoldBeamSpacing != 0)
+            {
+                Post(l, u0 + width - 1, v + 1, zoneId);
+            }
+        }
+
+        private static void Post(HoldLayout l, int u, int v, int zoneId)
+        {
+            for (; ZoneAt(u, v) == zoneId && !Main.tile[X(l, u), Y(l, v)].HasTile; v++)
+            {
+                SetTile(X(l, u), Y(l, v), TileID.WoodenBeam);
+            }
+        }
+
+        // 3-wide cargo hanging on a chain from the ceiling row `top` (the chain runs down the middle column).
+        private static void Hang(HoldLayout l, int u0, int top, int style, int chainLength)
+        {
+            for (int v = top; v < top + chainLength; v++)
+            {
+                SetTile(X(l, u0 + 1), Y(l, v), TileID.Chain);
+            }
+            Decor<HoldHangingCargo>(l, u0, top + chainLength, style);
         }
 
         private static void Platforms(HoldLayout l, int u0, int u1, int v)
