@@ -4,6 +4,12 @@ NPCs: {
 	ElfHighGuard.DisplayName: Elf High-Guard
 	ElvenArchmage.DisplayName: Elven Archmage
 
+	# ---- Dwarven Hold grunts (placeholder names) ----
+	DwarfSapper.DisplayName: Corrupted Sapper
+	DwarfGunner.DisplayName: Corrupted Gunner
+	DwarfMiner.DisplayName: Corrupted Miner
+	DwarfMechPilot.DisplayName: Rusted Mech Pilot
+
 	Volodar: {
 		DisplayName: Volodar
 		# Chat lines. Placeholders: Andy writes these. Leave a line empty ("") to skip it.
@@ -32,6 +38,8 @@ Projectiles: {
 	ArcaneOrb.DisplayName: Arcane Orb
 	SpectralArcherAlly.DisplayName: Spectral Archer
 	ElvenSpectralArrow.DisplayName: Spectral Arrow
+	DwarvenBomb.DisplayName: Dwarven Bomb
+	DwarvenPellet.DisplayName: Hot Shot
 	TinySealedTomePet.DisplayName: Tiny Sealed Tome
 	ElvenLightStreak.DisplayName: Light Streak
 	ElvenShortswordStab.DisplayName: Elven Shortsword
@@ -43,6 +51,11 @@ Projectiles: {
 # Placeholder: Andy writes this. Shown once, the first time Volodar is defeated. Leave empty ("") to skip it.
 ElvenOreSpawned: "[Placeholder] Your world has been blessed with Elven Ore!"
 Tiles.ElvenOreTile.MapEntry: Elven Ore
+Tiles.TitanControlMachine.MapEntry: Titan Control Machine
+
+# Placeholders: Andy writes these. Leave empty ("") to skip a message.
+HoldGateOpened: "[Placeholder] Somewhere deep below, the great gate of the dwarven hold grinds open..."
+TitanMachineDormant: "[Placeholder] The great machine is cold and silent. (The Dwarven Titan isn't built yet.)"
 
 Buffs: {
 	SpellweaveChargedBuff: {
@@ -332,5 +345,10 @@ Biomes: {
 	MysticalLibraryBiome: {
 		DisplayName: Mystical Library
 		TownNPCDialogueName: the Mystical Library Biome
+	}
+
+	DwarvenHoldBiome: {
+		DisplayName: Dwarven Hold
+		TownNPCDialogueName: the Dwarven Hold
 	}
 }

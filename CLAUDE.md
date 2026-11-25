@@ -100,11 +100,24 @@
   - Woken by a lever/machine in its chamber (re-usable, no summon item). Arena: foundry hangar with lava channels.
 - **Loot:** Titan weapons (to discuss later), grunt accessories, hold chests with signature items. No new ore tier for this Reign.
 
+### Status: Reign of the Dwarves
+- **Dwarven Hold (written, needs in-game testing):** `WorldGeneration/DwarvenHoldBuilder` + `DwarvenHoldSystem`, debug `/buildhold` (stand deep in the caverns; builds the gate just in front of you) and `/buildhold open`. Architecture follows Andy's reference screenshots (red brick, glowing molten seams in the hull, stepped ceilings).
+  - Built as one carved grid wrapped in a 4-tile lining; zones by wall type (`DwarvenHold.ZoneOfWall`): 1 gatehouse + great hall, 2 forges, 3 mines, 4 Titan foundry.
+  - Grey gatehouse with the sealed `HoldGate` -> great hall (V gables, dark pillars, tall framed windows, potted lava plants, lanterns) -> shaft -> forges (bays with ceilings stepping up; centre crucible pouring between two fire-window furnace banks, small furnaces with smokestacks, water tanks, hanging ore buckets, cog panel, steam pipes) -> shaft -> mine rail tunnel (track, timber, side tunnels to mining pockets) -> foundry (lava aqueduct, molten falls, far lava channel, `TitanControlMachine` placeholder that only shows a message).
+  - All hold blocks/walls unbreakable until Skeletron (`NPC.downedBoss3`); then 100 pick power. The gate is removed by `DwarvenHoldSystem.PostUpdateWorld` the first time Skeletron is dead (message `HoldGateOpened`, placeholder). Lava moss around the approach cave. Music placeholder: Underground Desert.
+- **Grunts (written, needs in-game testing; placeholder names/sprites):** `NPCs/Dwarves/` on `DwarfGruntBase`; spawns only in the hold (`Common/DwarvenHoldSpawns`), none in the foundry.
+  - Corrupted Sapper (hall/forges/mines): keeps 7-16 tiles away, lobs arcing `DwarvenBomb`s; below 30% HP lights its keg and runs at you to explode.
+  - Corrupted Gunner (hall/forges): aims 0.5s (muzzle smoke), blunderbuss spread of 5 `DwarvenPellet`s, recoil.
+  - Corrupted Miner (mines): digs through blocks toward you (never hold/library/dungeon/temple blocks, furniture or hard ores), pickaxe lunge.
+  - Rusted Mech Pilot (forges/mines, rare mini-elite, 320 HP): 3-shot bursts at range; up close steam windup -> charge (45 dmg) -> stunned.
+- Not yet: banners, drops/accessories, hold chests, Dwarven Titan, Titan weapons.
+
 ## Andy to test in-game
 - Archmage, Mystical Library layout, Volodar fight, his drops and collectibles.
 - Accessories + Library chests (new world or `/buildlibrary`), new sprites (Greatsword grip position in the swing).
 - Elven ore tier: ore spawn on first Volodar kill (also in multiplayer), mining/smelting, tools, both armor sets and their set bonuses.
 - Ore weapons (esp. sceptre beam feel and whip vs Spinal Tap/Firecracker), banners, Tome pet, Library ambience + music.
+- Dwarven Hold (`/buildhold`, gate opening after Skeletron, new world gen placement) and the four dwarf grunts.
 
 ## Later
 - Mystical Library: custom sprites.
